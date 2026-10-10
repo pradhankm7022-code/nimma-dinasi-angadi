@@ -12,6 +12,10 @@ export default defineConfig({
       srcDir: 'src',
       filename: 'sw.ts',
       registerType: 'autoUpdate',
+      injectManifest: {
+        swSrc: 'src/sw.ts',
+        swDest: 'dist/sw.js',
+      },
       manifest: {
         name: 'Nimma Dinasi Angadi',
         short_name: 'Angadi',
