@@ -1,0 +1,7 @@
+name = "nda-push-worker"
+main = "index.js"
+compatibility_date = "2024-09-23"
+compatibility_flags = ["nodejs_compat"]
+
+[vars]
+# Set VAPID_PUBLIC and VAPID_PRIVATE via: wrangler secret put VAPID_PUBLIC

@@ -1,0 +1,375 @@
+import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
+import {
+  createCategory, createProduct, deleteCategory, deleteProduct,
+  getProducts, updateCategory, updateProduct
+} from '../../api'
+import { useStore } from '../../contexts/StoreContext'
+import type { Category, Product, ProductVariant } from '../../types'
+
+type Tab = 'products' | 'categories'
+
+const EMPTY_PRODUCT: Omit<Product, 'id'> = {
+  name_en: '', name_kn: '', category: '', image_url: '', in_stock: true, variants: [], search_keys: '',
+}
+
+export function StaffProductsPage() {
+  const { categories, setCategories } = useStore()
+  const [tab, setTab] = useState<Tab>('products')
+
+  // Products state
+  const [products, setProducts] = useState<Product[]>([])
+  const [loadingProducts, setLoadingProducts] = useState(true)
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null)
+  const [isNewProduct, setIsNewProduct] = useState(false)
+  const [savingProduct, setSavingProduct] = useState(false)
+  const [productError, setProductError] = useState('')
+
+  // Categories state
+  const [editingCat, setEditingCat] = useState<Category | null>(null)
+  const [isNewCat, setIsNewCat] = useState(false)
+  const [savingCat, setSavingCat] = useState(false)
+  const [catError, setCatError] = useState('')
+  const [oldCatName, setOldCatName] = useState('')
+
+  useEffect(() => {
+    getProducts()
+      .then(res => setProducts(res.products))
+      .catch(console.error)
+      .finally(() => setLoadingProducts(false))
+  }, [])
+
+  // ── Product actions ──────────────────────────────────────
+  function openNewProduct() {
+    setEditingProduct({ id: '', ...EMPTY_PRODUCT })
+    setIsNewProduct(true)
+    setProductError('')
+  }
+
+  function openEditProduct(p: Product) {
+    setEditingProduct({ ...p, variants: p.variants.map(v => ({ ...v })) })
+    setIsNewProduct(false)
+    setProductError('')
+  }
+
+  async function handleSaveProduct() {
+    if (!editingProduct) return
+    setSavingProduct(true)
+    setProductError('')
+    try {
+      if (isNewProduct) {
+        const res = await createProduct(editingProduct)
+        setProducts(prev => [...prev, { ...editingProduct, id: res.id }])
+      } else {
+        await updateProduct(editingProduct)
+        setProducts(prev => prev.map(p => p.id === editingProduct.id ? editingProduct : p))
+      }
+      setEditingProduct(null)
+    } catch (err: unknown) {
+      setProductError(err instanceof Error ? err.message : 'Save failed')
+    } finally {
+      setSavingProduct(false)
+    }
+  }
+
+  async function handleDeleteProduct(id: string) {
+    if (!confirm('Delete this product?')) return
+    await deleteProduct(id)
+    setProducts(prev => prev.filter(p => p.id !== id))
+  }
+
+  function updateVariant(idx: number, field: keyof ProductVariant, value: string | number | boolean) {
+    if (!editingProduct) return
+    const variants = editingProduct.variants.map((v, i) => i === idx ? { ...v, [field]: value } : v)
+    setEditingProduct({ ...editingProduct, variants })
+  }
+
+  function addVariant() {
+    if (!editingProduct) return
+    setEditingProduct({ ...editingProduct, variants: [...editingProduct.variants, { label: '', price: 0 }] })
+  }
+
+  function removeVariant(idx: number) {
+    if (!editingProduct) return
+    setEditingProduct({ ...editingProduct, variants: editingProduct.variants.filter((_, i) => i !== idx) })
+  }
+
+  function setDefault(idx: number) {
+    if (!editingProduct) return
+    setEditingProduct({
+      ...editingProduct,
+      variants: editingProduct.variants.map((v, i) => ({ ...v, default: i === idx })),
+    })
+  }
+
+  // ── Category actions ─────────────────────────────────────
+  function openNewCat() {
+    setEditingCat({ name: '', image_url: '' })
+    setIsNewCat(true)
+    setOldCatName('')
+    setCatError('')
+  }
+
+  function openEditCat(cat: Category) {
+    setEditingCat({ ...cat })
+    setIsNewCat(false)
+    setOldCatName(cat.name)
+    setCatError('')
+  }
+
+  async function handleSaveCat() {
+    if (!editingCat || !editingCat.name.trim()) {
+      setCatError('Name is required')
+      return
+    }
+    setSavingCat(true)
+    setCatError('')
+    try {
+      if (isNewCat) {
+        await createCategory(editingCat.name, editingCat.image_url)
+        setCategories([...categories, editingCat])
+      } else {
+        await updateCategory(oldCatName, editingCat.name, editingCat.image_url)
+        setCategories(categories.map(c => c.name === oldCatName ? editingCat : c))
+      }
+      setEditingCat(null)
+    } catch (err: unknown) {
+      setCatError(err instanceof Error ? err.message : 'Save failed')
+    } finally {
+      setSavingCat(false)
+    }
+  }
+
+  async function handleDeleteCat(name: string) {
+    if (!confirm(`Delete category "${name}"?`)) return
+    await deleteCategory(name)
+    setCategories(categories.filter(c => c.name !== name))
+  }
+
+  // ── Product edit screen ───────────────────────────────────
+  if (editingProduct) {
+    return (
+      <div className="min-h-svh bg-gray-50 pb-8">
+        <div className="bg-white border-b border-gray-100 sticky top-0 z-10 px-4 py-3 flex items-center gap-3">
+          <button onClick={() => setEditingProduct(null)} className="p-2 -ml-2 text-gray-600 hover:bg-gray-100 rounded-lg">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
+          <h1 className="text-lg font-bold text-gray-900 flex-1">{isNewProduct ? 'New Product' : 'Edit Product'}</h1>
+          <button onClick={handleSaveProduct} disabled={savingProduct}
+            className="bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white text-sm font-semibold px-4 py-1.5 rounded-lg transition-colors">
+            {savingProduct ? 'Saving…' : 'Save'}
+          </button>
+        </div>
+
+        <div className="px-4 pt-4 space-y-4 max-w-lg">
+          {productError && <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg px-3 py-2">{productError}</div>}
+
+          {[
+            { label: 'Name (English)', field: 'name_en', placeholder: 'Sugar' },
+            { label: 'Name (Kannada)', field: 'name_kn', placeholder: 'ಸಕ್ಕರೆ' },
+            { label: 'Image URL', field: 'image_url', placeholder: 'https://…' },
+            { label: 'Search Keys (transliteration)', field: 'search_keys', placeholder: 'sakkare, sugar' },
+          ].map(({ label, field, placeholder }) => (
+            <div key={field}>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
+              <input
+                type="text" value={editingProduct[field as keyof typeof editingProduct] as string}
+                onChange={e => setEditingProduct({ ...editingProduct, [field]: e.target.value })}
+                placeholder={placeholder}
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500"
+              />
+            </div>
+          ))}
+
+          {/* Category dropdown */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+            <select
+              value={editingProduct.category}
+              onChange={e => setEditingProduct({ ...editingProduct, category: e.target.value })}
+              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500 bg-white"
+            >
+              <option value="">Select category…</option>
+              {categories.map(c => (
+                <option key={c.name} value={c.name}>{c.name}</option>
+              ))}
+            </select>
+          </div>
+
+          <label className="flex items-center gap-2 text-sm font-medium text-gray-700 cursor-pointer">
+            <input type="checkbox" checked={editingProduct.in_stock}
+              onChange={e => setEditingProduct({ ...editingProduct, in_stock: e.target.checked })}
+              className="rounded accent-green-600" />
+            In Stock
+          </label>
+
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-sm font-medium text-gray-700">Variants</p>
+              <button onClick={addVariant} className="text-xs text-green-600 font-medium hover:underline">+ Add</button>
+            </div>
+            <div className="space-y-2">
+              {editingProduct.variants.map((v, i) => (
+                <div key={i} className="flex gap-2 items-center bg-white border border-gray-200 rounded-lg p-2">
+                  <input
+                    type="text" value={v.label} onChange={e => updateVariant(i, 'label', e.target.value)}
+                    placeholder="100g" className="flex-1 border-none outline-none text-sm bg-transparent"
+                  />
+                  <input
+                    type="number" value={v.price} onChange={e => updateVariant(i, 'price', parseFloat(e.target.value) || 0)}
+                    placeholder="Price" className="w-20 border-none outline-none text-sm bg-transparent text-right"
+                  />
+                  <button onClick={() => setDefault(i)}
+                    className={`text-xs px-2 py-0.5 rounded-full border ${v.default ? 'bg-green-600 border-green-600 text-white' : 'border-gray-200 text-gray-500'}`}>
+                    Default
+                  </button>
+                  <button onClick={() => removeVariant(i)} className="text-gray-400 hover:text-red-500 ml-1">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // ── Category edit screen ──────────────────────────────────
+  if (editingCat) {
+    return (
+      <div className="min-h-svh bg-gray-50 pb-8">
+        <div className="bg-white border-b border-gray-100 sticky top-0 z-10 px-4 py-3 flex items-center gap-3">
+          <button onClick={() => setEditingCat(null)} className="p-2 -ml-2 text-gray-600 hover:bg-gray-100 rounded-lg">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
+          <h1 className="text-lg font-bold text-gray-900 flex-1">{isNewCat ? 'New Category' : 'Edit Category'}</h1>
+          <button onClick={handleSaveCat} disabled={savingCat}
+            className="bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white text-sm font-semibold px-4 py-1.5 rounded-lg transition-colors">
+            {savingCat ? 'Saving…' : 'Save'}
+          </button>
+        </div>
+
+        <div className="px-4 pt-4 space-y-4 max-w-lg">
+          {catError && <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg px-3 py-2">{catError}</div>}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+            <input
+              type="text" value={editingCat.name} onChange={e => setEditingCat({ ...editingCat, name: e.target.value })}
+              placeholder="Fruits"
+              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Image URL</label>
+            <input
+              type="text" value={editingCat.image_url} onChange={e => setEditingCat({ ...editingCat, image_url: e.target.value })}
+              placeholder="https://…"
+              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500"
+            />
+          </div>
+          {editingCat.image_url && (
+            <img src={editingCat.image_url} alt="preview" className="w-24 h-24 rounded-xl object-cover border border-gray-100" />
+          )}
+        </div>
+      </div>
+    )
+  }
+
+  // ── Main list screen ──────────────────────────────────────
+  return (
+    <div className="min-h-svh bg-gray-50 pb-6">
+      <div className="bg-white border-b border-gray-100 sticky top-0 z-10 px-4 py-3 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <Link to="/staff/orders" className="p-2 -ml-2 text-gray-600 hover:bg-gray-100 rounded-lg">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+          </Link>
+          <h1 className="text-lg font-bold text-gray-900">Manage</h1>
+        </div>
+        <button
+          onClick={() => tab === 'products' ? openNewProduct() : openNewCat()}
+          className="bg-green-600 hover:bg-green-700 text-white text-sm font-semibold px-3 py-1.5 rounded-lg transition-colors"
+        >
+          + Add
+        </button>
+      </div>
+
+      {/* Tabs */}
+      <div className="flex border-b border-gray-100 bg-white px-4">
+        {(['products', 'categories'] as Tab[]).map(t => (
+          <button
+            key={t}
+            onClick={() => setTab(t)}
+            className={`py-2.5 px-4 text-sm font-medium capitalize border-b-2 transition-colors ${
+              tab === t ? 'border-green-600 text-green-600' : 'border-transparent text-gray-500'
+            }`}
+          >
+            {t}
+          </button>
+        ))}
+      </div>
+
+      <div className="px-4 pt-4 space-y-3">
+        {tab === 'products' ? (
+          loadingProducts ? (
+            <div className="text-center text-gray-400 py-16 text-sm">Loading…</div>
+          ) : products.length === 0 ? (
+            <div className="text-center text-gray-400 py-16 text-sm">No products yet</div>
+          ) : (
+            products.map(p => (
+              <div key={p.id} className="bg-white rounded-xl border border-gray-100 shadow-sm p-3 flex gap-3 items-center">
+                <div className="w-12 h-12 flex-shrink-0 rounded-lg overflow-hidden bg-gray-100">
+                  {p.image_url ? (
+                    <img src={p.image_url} alt={p.name_en} className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-xl">🛒</div>
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-gray-900 truncate">{p.name_en}</p>
+                  <p className="text-xs text-gray-400">{p.category} · {p.variants.map(v => v.label).join(', ')}</p>
+                  {!p.in_stock && <span className="text-xs text-red-500 font-medium">Out of stock</span>}
+                </div>
+                <div className="flex gap-2 flex-shrink-0">
+                  <button onClick={() => openEditProduct(p)} className="text-xs text-green-600 font-medium hover:underline">Edit</button>
+                  <button onClick={() => handleDeleteProduct(p.id)} className="text-xs text-red-500 font-medium hover:underline">Delete</button>
+                </div>
+              </div>
+            ))
+          )
+        ) : (
+          categories.length === 0 ? (
+            <div className="text-center text-gray-400 py-16 text-sm">No categories yet</div>
+          ) : (
+            categories.map(cat => (
+              <div key={cat.name} className="bg-white rounded-xl border border-gray-100 shadow-sm p-3 flex gap-3 items-center">
+                <div className="w-12 h-12 flex-shrink-0 rounded-lg overflow-hidden bg-gray-100">
+                  {cat.image_url ? (
+                    <img src={cat.image_url} alt={cat.name} className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-xl">📦</div>
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-gray-900">{cat.name}</p>
+                </div>
+                <div className="flex gap-2 flex-shrink-0">
+                  <button onClick={() => openEditCat(cat)} className="text-xs text-green-600 font-medium hover:underline">Edit</button>
+                  <button onClick={() => handleDeleteCat(cat.name)} className="text-xs text-red-500 font-medium hover:underline">Delete</button>
+                </div>
+              </div>
+            ))
+          )
+        )}
+      </div>
+    </div>
+  )
+}
