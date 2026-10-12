@@ -11,7 +11,7 @@ export function CatalogPage() {
   const { storeName, categories, products, loadingStore } = useStore()
   const { logout } = useAuth()
   const navigate = useNavigate()
-  const [view, setView] = useState<View>('categories')
+  const [view, setView] = useState<View>('all')
   const [search, setSearch] = useState('')
 
   function handleLogout() {
