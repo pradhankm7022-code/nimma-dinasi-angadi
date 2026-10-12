@@ -1,4 +1,5 @@
-import { BrowserRouter, Route, Routes } from 'react-router-dom'
+import { BrowserRouter, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
+import { useEffect } from 'react'
 import { RequireAuth, RequireStaff } from './components/ProtectedRoute'
 import { AuthProvider } from './contexts/AuthContext'
 import { StoreProvider } from './contexts/StoreContext'
@@ -13,11 +14,38 @@ import { StaffLoginPage } from './pages/staff/StaffLoginPage'
 import { StaffOrdersPage } from './pages/staff/StaffOrdersPage'
 import { StaffProductsPage } from './pages/staff/StaffProductsPage'
 
+function BackButtonHandler() {
+  const navigate = useNavigate()
+  const { pathname } = useLocation()
+
+  useEffect(() => {
+    // Push a state so there's always something to pop back to
+    window.history.pushState({ page: pathname }, '')
+
+    function handlePopState() {
+      if (pathname === '/' || pathname === '/staff/orders') {
+        // On root pages, push state again to prevent exit
+        window.history.pushState({ page: pathname }, '')
+      } else if (pathname.startsWith('/staff/')) {
+        navigate('/staff/orders', { replace: true })
+      } else {
+        navigate('/', { replace: true })
+      }
+    }
+
+    window.addEventListener('popstate', handlePopState)
+    return () => window.removeEventListener('popstate', handlePopState)
+  }, [pathname, navigate])
+
+  return null
+}
+
 export default function App() {
   return (
     <AuthProvider>
       <StoreProvider>
         <BrowserRouter>
+          <BackButtonHandler />
           <Routes>
             {/* Auth */}
             <Route path="/login" element={<LoginPage />} />
