@@ -56,12 +56,12 @@ export function CartPage() {
                   <p className="text-xs text-green-700 font-medium mt-0.5">{item.variant_label}</p>
                 </div>
                 <div className="flex flex-col items-end gap-2">
-                  <div className="flex items-center gap-2 bg-green-50 rounded-full px-1 py-0.5">
+                  <div className="flex items-center bg-green-600 rounded-lg overflow-hidden">
                     <button onClick={() => updateCartQty(item.product_id, item.variant_label, item.qty - 1)}
-                      className="w-6 h-6 flex items-center justify-center rounded-full bg-green-600 text-white font-bold text-sm">−</button>
-                    <span className="text-sm font-semibold text-green-700 min-w-[16px] text-center">{item.qty}</span>
+                      className="px-3 py-1 text-white font-bold text-lg leading-none active:bg-green-700">−</button>
+                    <span className="px-2 py-1 text-white font-bold text-sm min-w-[24px] text-center">{item.qty}</span>
                     <button onClick={() => updateCartQty(item.product_id, item.variant_label, item.qty + 1)}
-                      className="w-6 h-6 flex items-center justify-center rounded-full bg-green-600 text-white font-bold text-sm">+</button>
+                      className="px-3 py-1 text-white font-bold text-lg leading-none active:bg-green-700">+</button>
                   </div>
                 </div>
               </div>
