@@ -208,6 +208,7 @@ function createProduct(body) {
     p.in_stock ? 'TRUE' : 'FALSE',
     JSON.stringify(p.variants || []),
     p.search_keys || '',
+    0,
   ]);
   return ok({ id: id });
 }
@@ -218,11 +219,13 @@ function updateProduct(body) {
   var data = s.getDataRange().getValues();
   for (var i = 1; i < data.length; i++) {
     if (data[i][0] === p.id) {
-      s.getRange(i + 1, 1, 1, 8).setValues([[
+      var existingCount = Number(data[i][8]) || 0;
+      s.getRange(i + 1, 1, 1, 9).setValues([[
         p.id, p.name_en, p.name_kn, p.category, p.image_url,
         p.in_stock ? 'TRUE' : 'FALSE',
         JSON.stringify(p.variants || []),
         p.search_keys || '',
+        existingCount,
       ]]);
       return ok();
     }
