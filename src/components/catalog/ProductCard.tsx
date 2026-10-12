@@ -94,12 +94,21 @@ export function ProductCard({ product }: Props) {
         )}
 
         {/* Qty control */}
-        <div className="mt-auto flex items-center gap-2">
-          <div className="flex items-center gap-2 bg-green-50 rounded-full px-1 py-0.5">
-            <button onClick={decrement} className="w-6 h-6 flex items-center justify-center rounded-full bg-green-600 text-white font-bold text-sm">−</button>
-            <span className="text-sm font-semibold text-green-700 min-w-[16px] text-center">{qty}</span>
-            <button onClick={increment} className="w-6 h-6 flex items-center justify-center rounded-full bg-green-600 text-white font-bold text-sm">+</button>
-          </div>
+        <div className="mt-auto flex items-center justify-end">
+          {qty === 0 ? (
+            <button
+              onClick={increment}
+              className="bg-white border-2 border-green-600 text-green-600 font-bold text-sm px-5 py-0.5 rounded-lg active:scale-95 transition-transform"
+            >
+              Add
+            </button>
+          ) : (
+            <div className="flex items-center bg-green-600 rounded-lg overflow-hidden">
+              <button onClick={decrement} className="px-3 py-1 text-white font-bold text-lg leading-none active:bg-green-700">−</button>
+              <span className="px-2 py-1 text-white font-bold text-sm min-w-[24px] text-center">{qty}</span>
+              <button onClick={increment} className="px-3 py-1 text-white font-bold text-lg leading-none active:bg-green-700">+</button>
+            </div>
+          )}
         </div>
       </div>
     </div>
