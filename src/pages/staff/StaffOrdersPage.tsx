@@ -21,6 +21,11 @@ export function StaffOrdersPage() {
 
   const navigate = useNavigate()
 
+  useEffect(() => {
+    // Replace entire history stack so back button exits the app
+    window.history.replaceState(null, '', '/staff/orders')
+  }, [])
+
   function handleLogout() {
     sessionStorage.removeItem('nda_staff')
     localStorage.removeItem('nda_is_staff')

@@ -19,8 +19,10 @@ function BackButtonHandler() {
   const { pathname } = useLocation()
 
   useEffect(() => {
-    // Don't intercept back on auth/login pages
-    if (pathname === '/staff/login' || pathname === '/login' || pathname === '/signup' || pathname === '/forgot-password') return
+    // Don't intercept back on auth/login pages or root pages (allow exit)
+    if (pathname === '/staff/login' || pathname === '/staff/orders' ||
+        pathname === '/login' || pathname === '/signup' ||
+        pathname === '/forgot-password' || pathname === '/') return
 
     // Push a state so there's always something to pop back to
     window.history.pushState({ page: pathname }, '')
