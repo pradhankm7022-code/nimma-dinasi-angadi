@@ -24,11 +24,13 @@ function BackButtonHandler() {
 
     function handlePopState() {
       if (pathname === '/' || pathname === '/staff/orders') {
-        // On root pages, push state again to prevent exit
-        window.history.pushState({ page: pathname }, '')
+        // Allow exit — don't push state back
+        return
       } else if (pathname.startsWith('/staff/')) {
+        window.history.pushState({ page: pathname }, '')
         navigate('/staff/orders', { replace: true })
       } else {
+        window.history.pushState({ page: pathname }, '')
         navigate('/', { replace: true })
       }
     }
