@@ -12,7 +12,8 @@ export interface Product {
   image_url: string
   in_stock: boolean
   variants: ProductVariant[]
-  search_keys: string // comma-separated transliteration hints e.g. "sebu, apple"
+  search_keys: string
+  order_count: number
 }
 
 export interface Category {

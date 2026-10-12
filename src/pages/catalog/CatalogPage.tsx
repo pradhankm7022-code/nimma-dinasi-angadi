@@ -22,14 +22,14 @@ export function CatalogPage() {
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase()
     const list = view === 'all' ? [...products] : products
-    if (!q) return view === 'all' ? list.sort((a, b) => a.name_en.localeCompare(b.name_en)) : list
+    if (!q) return view === 'all' ? list.sort((a, b) => (b.order_count ?? 0) - (a.order_count ?? 0)) : list
     return list
       .filter(p =>
         p.name_en.toLowerCase().includes(q) ||
         p.name_kn.toLowerCase().includes(q) ||
         (p.search_keys || '').toLowerCase().split(',').some(k => k.trim().includes(q))
       )
-      .sort((a, b) => a.name_en.localeCompare(b.name_en))
+      .sort((a, b) => (b.order_count ?? 0) - (a.order_count ?? 0))
   }, [products, view, search])
 
   const isSearching = search.trim().length > 0

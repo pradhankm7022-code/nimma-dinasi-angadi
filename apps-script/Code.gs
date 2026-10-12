@@ -159,6 +159,7 @@ function getProducts() {
         in_stock: r.in_stock === true || r.in_stock === 'TRUE',
         variants: variants,
         search_keys: r.search_keys || '',
+        order_count: Number(r.order_count) || 0,
       };
     });
   return ok({ products: products });
@@ -334,6 +335,8 @@ function placeOrder(body) {
     id, orderNumber, body.customerId,
     JSON.stringify(body.items), 'Pending', new Date().toISOString(),
   ]);
+  // Increment order_count for each ordered product
+  incrementOrderCounts(body.items);
   try { notifyStaff(orderNumber); } catch(e) { Logger.log('notifyStaff error: ' + e); }
   return ok({ order_number: orderNumber });
 }
@@ -435,6 +438,26 @@ function notifyStaff(orderNumber) {
       });
     } catch(e) {
       Logger.log('Push send error: ' + e.message);
+    }
+  });
+}
+
+function incrementOrderCounts(items) {
+  if (!items || !items.length) return;
+  var s = sheet('Products');
+  var data = s.getDataRange().getValues();
+  var headers = data[0];
+  var idCol = headers.indexOf('id');
+  var countCol = headers.indexOf('order_count');
+  if (idCol === -1 || countCol === -1) return;
+  items.forEach(function(item) {
+    for (var i = 1; i < data.length; i++) {
+      if (data[i][idCol] === item.product_id) {
+        var current = Number(data[i][countCol]) || 0;
+        s.getRange(i + 1, countCol + 1).setValue(current + 1);
+        data[i][countCol] = current + 1; // update local cache to avoid double-increment
+        break;
+      }
     }
   });
 }

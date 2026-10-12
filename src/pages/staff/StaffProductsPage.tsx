@@ -10,7 +10,7 @@ import type { Category, Product, ProductVariant } from '../../types'
 type Tab = 'products' | 'categories'
 
 const EMPTY_PRODUCT: Omit<Product, 'id'> = {
-  name_en: '', name_kn: '', category: '', image_url: '', in_stock: true, variants: [], search_keys: '',
+  name_en: '', name_kn: '', category: '', image_url: '', in_stock: true, variants: [], search_keys: '', order_count: 0,
 }
 
 export function StaffProductsPage() {
