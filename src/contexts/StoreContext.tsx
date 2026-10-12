@@ -20,6 +20,18 @@ interface StoreContextValue {
 const StoreContext = createContext<StoreContextValue | null>(null)
 
 const CACHE_KEY = 'nda_store_cache'
+const CART_KEY = 'nda_cart'
+
+function readCart(): CartItem[] {
+  try {
+    const raw = localStorage.getItem(CART_KEY)
+    return raw ? JSON.parse(raw) : []
+  } catch { return [] }
+}
+
+function writeCart(cart: CartItem[]) {
+  try { localStorage.setItem(CART_KEY, JSON.stringify(cart)) } catch {}
+}
 
 interface StoreCache {
   storeName: string
@@ -47,7 +59,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [categories, setCategories] = useState<Category[]>(cached?.categories ?? [])
   const [products, setProducts] = useState<Product[]>(cached?.products ?? [])
   const [loadingStore, setLoadingStore] = useState(!cached) // no spinner if cache exists
-  const [cart, setCart] = useState<CartItem[]>([])
+  const [cart, setCart] = useState<CartItem[]>(readCart())
 
   useEffect(() => {
     // Always fetch fresh in background — stale-while-revalidate
@@ -73,27 +85,29 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       const idx = prev.findIndex(
         c => c.product_id === item.product_id && c.variant_label === item.variant_label
       )
-      if (idx >= 0) {
-        const next = [...prev]
-        next[idx] = { ...next[idx], qty: next[idx].qty + item.qty }
-        return next
-      }
-      return [...prev, item]
+      const next = idx >= 0
+        ? prev.map((c, i) => i === idx ? { ...c, qty: c.qty + item.qty } : c)
+        : [...prev, item]
+      writeCart(next)
+      return next
     })
   }
 
   function updateCartQty(productId: string, variantLabel: string, qty: number) {
-    setCart(prev =>
-      qty <= 0
+    setCart(prev => {
+      const next = qty <= 0
         ? prev.filter(c => !(c.product_id === productId && c.variant_label === variantLabel))
         : prev.map(c =>
             c.product_id === productId && c.variant_label === variantLabel ? { ...c, qty } : c
           )
-    )
+      writeCart(next)
+      return next
+    })
   }
 
   function clearCart() {
     setCart([])
+    writeCart([])
   }
 
   const cartCount = cart.reduce((sum, c) => sum + c.qty, 0)
