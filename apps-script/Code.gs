@@ -49,14 +49,12 @@ function hashPassword(pw) {
 //  Complex params are JSON-encoded as query string values
 // ============================================================
 function doGet(e) {
-  var p = e.parameter;
-  var action = p.action;
-
-  // Helper: parse a param that may be JSON
-  function param(key) {
-    var v = p[key];
-    if (!v) return undefined;
-    try { return JSON.parse(v); } catch(_) { return v; }
+  var action = e.parameter.action;
+  var p = {};
+  try {
+    p = JSON.parse(e.parameter.payload || '{}');
+  } catch(_) {
+    p = e.parameter;
   }
 
   try {
@@ -69,17 +67,17 @@ function doGet(e) {
     if (action === 'signIn')              return signIn({ email: p.email, password: p.password });
     if (action === 'forgotPassword')      return forgotPassword({ email: p.email });
     if (action === 'verifyOTP')           return verifyOTP({ email: p.email, otp: p.otp, newPassword: p.newPassword });
-    if (action === 'placeOrder')          return placeOrder({ customerId: p.customerId, items: param('items') });
+    if (action === 'placeOrder')          return placeOrder({ customerId: p.customerId, items: p.items });
     if (action === 'updateOrderStatus')   return updateOrderStatus({ orderId: p.orderId, status: p.status });
-    if (action === 'finishBagging')        return finishBagging({ orderId: p.orderId, items: param('items') });
+    if (action === 'finishBagging')       return finishBagging({ orderId: p.orderId, items: p.items });
     if (action === 'staffLogin')          return staffLogin({ pin: p.pin });
-    if (action === 'createProduct')       return createProduct({ name_en: p.name_en, name_kn: p.name_kn, category: p.category, image_url: p.image_url, in_stock: p.in_stock, variants: param('variants'), search_keys: p.search_keys });
-    if (action === 'updateProduct')       return updateProduct({ id: p.id, name_en: p.name_en, name_kn: p.name_kn, category: p.category, image_url: p.image_url, in_stock: p.in_stock, variants: param('variants'), search_keys: p.search_keys });
+    if (action === 'createProduct')       return createProduct({ name_en: p.name_en, name_kn: p.name_kn, category: p.category, image_url: p.image_url, in_stock: p.in_stock, variants: p.variants, search_keys: p.search_keys });
+    if (action === 'updateProduct')       return updateProduct({ id: p.id, name_en: p.name_en, name_kn: p.name_kn, category: p.category, image_url: p.image_url, in_stock: p.in_stock, variants: p.variants, search_keys: p.search_keys });
     if (action === 'deleteProduct')       return deleteProduct({ id: p.id });
     if (action === 'createCategory')      return createCategory({ name: p.name, image_url: p.image_url });
     if (action === 'updateCategory')      return updateCategory({ oldName: p.oldName, name: p.name, image_url: p.image_url });
     if (action === 'deleteCategory')      return deleteCategory({ name: p.name });
-    if (action === 'savePushSubscription') return savePushSubscription({ subscription: param('subscription') });
+    if (action === 'savePushSubscription') return savePushSubscription({ subscription: p.subscription });
     return err('Unknown action: ' + action);
   } catch (ex) {
     return err(ex.message);
@@ -203,8 +201,8 @@ function createProduct(body) {
   var s = sheet('Products');
   var id = uuid();
   s.appendRow([
-    id, body.name_en, body.name_kn, body.category, body.image_url,
-    (body.in_stock === true || body.in_stock === 'true') ? 'TRUE' : 'FALSE',
+    id, body.name_en, body.name_kn, body.category, body.image_url || '',
+    body.in_stock ? 'TRUE' : 'FALSE',
     JSON.stringify(body.variants || []),
     body.search_keys || '',
     0,
@@ -219,8 +217,8 @@ function updateProduct(body) {
     if (data[i][0] === body.id) {
       var existingCount = Number(data[i][8]) || 0;
       s.getRange(i + 1, 1, 1, 9).setValues([[
-        body.id, body.name_en, body.name_kn, body.category, body.image_url,
-        (body.in_stock === true || body.in_stock === 'true') ? 'TRUE' : 'FALSE',
+        body.id, body.name_en, body.name_kn, body.category, body.image_url || '',
+        body.in_stock ? 'TRUE' : 'FALSE',
         JSON.stringify(body.variants || []),
         body.search_keys || '',
         existingCount,
@@ -353,8 +351,16 @@ function getMyOrders(customerId) {
 
 function getAllOrders() {
   var rows = sheetData('Orders');
-  var orders = rows.map(parseOrder)
-    .sort(function(a, b) { return new Date(b.created_at) - new Date(a.created_at); });
+  var users = sheetData('Users');
+  var userMap = {};
+  users.forEach(function(u) { userMap[u.id] = u; });
+  var orders = rows.map(function(r) {
+    var order = parseOrder(r);
+    var user = userMap[r.customer_id];
+    order.customer_name = user ? user.name : '';
+    order.customer_phone = user ? user.phone : '';
+    return order;
+  }).sort(function(a, b) { return new Date(b.created_at) - new Date(a.created_at); });
   return ok({ orders: orders });
 }
 

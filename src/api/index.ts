@@ -4,10 +4,8 @@ const BASE_URL = import.meta.env.VITE_API_URL as string
 
 async function call<T>(params: Record<string, unknown>): Promise<T> {
   const url = new URL(BASE_URL)
-  // Encode entire payload as a single JSON query param — avoids CORS preflight
-  Object.entries(params).forEach(([k, v]) => {
-    url.searchParams.set(k, typeof v === 'string' ? v : JSON.stringify(v))
-  })
+  url.searchParams.set('action', params.action as string)
+  url.searchParams.set('payload', JSON.stringify(params))
   const res = await fetch(url.toString())
   const data = await res.json()
   if (!data.ok) throw new Error(data.error || 'Request failed')
