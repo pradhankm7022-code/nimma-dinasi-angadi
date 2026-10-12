@@ -23,6 +23,7 @@ export function StaffOrdersPage() {
 
   function handleLogout() {
     sessionStorage.removeItem('nda_staff')
+    localStorage.removeItem('nda_is_staff')
     navigate('/staff/login', { replace: true })
   }
 

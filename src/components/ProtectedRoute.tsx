@@ -4,7 +4,10 @@ import { useAuth } from '../contexts/AuthContext'
 export function RequireAuth() {
   const { user, loading } = useAuth()
   if (loading) return null
-  return user ? <Outlet /> : <Navigate to="/login" replace />
+  if (user) return <Outlet />
+  // Staff device should go to staff PIN, not customer login
+  if (localStorage.getItem('nda_is_staff') === 'true') return <Navigate to="/staff/login" replace />
+  return <Navigate to="/login" replace />
 }
 
 export function RequireStaff() {

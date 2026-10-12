@@ -1,4 +1,4 @@
-import { BrowserRouter, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
+import { BrowserRouter, Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
 import { useEffect } from 'react'
 import { RequireAuth, RequireStaff } from './components/ProtectedRoute'
 import { AuthProvider } from './contexts/AuthContext'
@@ -68,6 +68,13 @@ export default function App() {
               <Route path="/staff/orders" element={<StaffOrdersPage />} />
               <Route path="/staff/products" element={<StaffProductsPage />} />
             </Route>
+
+            {/* Root redirect — staff devices go to PIN screen */}
+            <Route path="*" element={
+              localStorage.getItem('nda_is_staff') === 'true'
+                ? <Navigate to="/staff/login" replace />
+                : <Navigate to="/login" replace />
+            } />
           </Routes>
         </BrowserRouter>
       </StoreProvider>

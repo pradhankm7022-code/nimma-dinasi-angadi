@@ -40,6 +40,7 @@ export function StaffLoginPage() {
     try {
       await staffLogin(pin)
       sessionStorage.setItem('nda_staff', 'true')
+      localStorage.setItem('nda_is_staff', 'true')
       subscribePush() // fire-and-forget — don't block navigation
       navigate('/staff/orders', { replace: true })
     } catch (err: unknown) {
