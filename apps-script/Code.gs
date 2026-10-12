@@ -73,8 +73,8 @@ function doGet(e) {
     if (action === 'updateOrderStatus')   return updateOrderStatus({ orderId: p.orderId, status: p.status });
     if (action === 'finishBagging')        return finishBagging({ orderId: p.orderId, items: param('items') });
     if (action === 'staffLogin')          return staffLogin({ pin: p.pin });
-    if (action === 'createProduct')       return createProduct({ product: param('product') });
-    if (action === 'updateProduct')       return updateProduct({ product: param('product') });
+    if (action === 'createProduct')       return createProduct({ name_en: p.name_en, name_kn: p.name_kn, category: p.category, image_url: p.image_url, in_stock: p.in_stock, variants: param('variants'), search_keys: p.search_keys });
+    if (action === 'updateProduct')       return updateProduct({ id: p.id, name_en: p.name_en, name_kn: p.name_kn, category: p.category, image_url: p.image_url, in_stock: p.in_stock, variants: param('variants'), search_keys: p.search_keys });
     if (action === 'deleteProduct')       return deleteProduct({ id: p.id });
     if (action === 'createCategory')      return createCategory({ name: p.name, image_url: p.image_url });
     if (action === 'updateCategory')      return updateCategory({ oldName: p.oldName, name: p.name, image_url: p.image_url });
@@ -201,13 +201,12 @@ function deleteCategory(body) {
 
 function createProduct(body) {
   var s = sheet('Products');
-  var p = body.product;
   var id = uuid();
   s.appendRow([
-    id, p.name_en, p.name_kn, p.category, p.image_url,
-    p.in_stock ? 'TRUE' : 'FALSE',
-    JSON.stringify(p.variants || []),
-    p.search_keys || '',
+    id, body.name_en, body.name_kn, body.category, body.image_url,
+    (body.in_stock === true || body.in_stock === 'true') ? 'TRUE' : 'FALSE',
+    JSON.stringify(body.variants || []),
+    body.search_keys || '',
     0,
   ]);
   return ok({ id: id });
@@ -215,16 +214,15 @@ function createProduct(body) {
 
 function updateProduct(body) {
   var s = sheet('Products');
-  var p = body.product;
   var data = s.getDataRange().getValues();
   for (var i = 1; i < data.length; i++) {
-    if (data[i][0] === p.id) {
+    if (data[i][0] === body.id) {
       var existingCount = Number(data[i][8]) || 0;
       s.getRange(i + 1, 1, 1, 9).setValues([[
-        p.id, p.name_en, p.name_kn, p.category, p.image_url,
-        p.in_stock ? 'TRUE' : 'FALSE',
-        JSON.stringify(p.variants || []),
-        p.search_keys || '',
+        body.id, body.name_en, body.name_kn, body.category, body.image_url,
+        (body.in_stock === true || body.in_stock === 'true') ? 'TRUE' : 'FALSE',
+        JSON.stringify(body.variants || []),
+        body.search_keys || '',
         existingCount,
       ]]);
       return ok();

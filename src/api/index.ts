@@ -66,10 +66,29 @@ export const deleteCategory = (name: string) =>
 
 // Product CRUD (staff)
 export const createProduct = (product: Omit<Product, 'id'>) =>
-  call<{ ok: true; id: string }>({ action: 'createProduct', product })
+  call<{ ok: true; id: string }>({
+    action: 'createProduct',
+    name_en: product.name_en,
+    name_kn: product.name_kn,
+    category: product.category,
+    image_url: product.image_url,
+    in_stock: product.in_stock,
+    variants: product.variants,
+    search_keys: product.search_keys,
+  })
 
 export const updateProduct = (product: Product) =>
-  call<{ ok: true }>({ action: 'updateProduct', product })
+  call<{ ok: true }>({
+    action: 'updateProduct',
+    id: product.id,
+    name_en: product.name_en,
+    name_kn: product.name_kn,
+    category: product.category,
+    image_url: product.image_url,
+    in_stock: product.in_stock,
+    variants: product.variants,
+    search_keys: product.search_keys,
+  })
 
 export const deleteProduct = (id: string) =>
   call<{ ok: true }>({ action: 'deleteProduct', id })
