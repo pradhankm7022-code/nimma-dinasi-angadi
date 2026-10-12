@@ -214,11 +214,14 @@ export function StaffProductsPage() {
               {editingProduct.variants.map((v, i) => (
                 <div key={i} className="flex gap-2 items-center bg-white border border-gray-200 rounded-lg p-2">
                   <input
-                    type="text" value={v.label} onChange={e => updateVariant(i, 'label', e.target.value)}
-                    placeholder="100g" className="flex-1 border-none outline-none text-sm bg-transparent"
+                    type="text" value={v.label}
+                    onChange={e => updateVariant(i, 'label', e.target.value.toUpperCase())}
+                    placeholder="100G" className="flex-1 border-none outline-none text-sm bg-transparent"
                   />
                   <input
-                    type="number" value={v.price} onChange={e => updateVariant(i, 'price', parseFloat(e.target.value) || 0)}
+                    type="number" value={v.price === 0 ? '' : v.price}
+                    onChange={e => updateVariant(i, 'price', parseFloat(e.target.value) || 0)}
+                    onFocus={e => e.target.select()}
                     placeholder="Price" className="w-20 border-none outline-none text-sm bg-transparent text-right"
                   />
                   <button onClick={() => setDefault(i)}
