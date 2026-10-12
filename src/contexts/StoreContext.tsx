@@ -51,24 +51,29 @@ function writeCache(data: StoreCache) {
   try { localStorage.setItem(CACHE_KEY, JSON.stringify(data)) } catch {}
 }
 
+function sortByOrderCount(products: Product[]) {
+  return [...products].sort((a, b) => (b.order_count ?? 0) - (a.order_count ?? 0))
+}
+
 export function StoreProvider({ children }: { children: React.ReactNode }) {
   const cached = readCache()
 
   const [storeName, setStoreName] = useState(cached?.storeName ?? 'Nimma Dinasi Angadi')
   const [storeLogo, setStoreLogo] = useState(cached?.storeLogo ?? '')
   const [categories, setCategories] = useState<Category[]>(cached?.categories ?? [])
-  const [products, setProducts] = useState<Product[]>(cached?.products ?? [])
-  const [loadingStore, setLoadingStore] = useState(!cached) // no spinner if cache exists
+  const [products] = useState<Product[]>(sortByOrderCount(cached?.products ?? []))
+  const [loadingStore, setLoadingStore] = useState(!cached)
   const [cart, setCart] = useState<CartItem[]>(readCart())
 
   useEffect(() => {
     // Always fetch fresh in background — stale-while-revalidate
+    // Products are NOT re-sorted after fetch to avoid visible list reorder
     Promise.all([getSettings(), getProducts()])
       .then(([settings, productsRes]) => {
         setStoreName(settings.store_name)
         setStoreLogo(settings.store_logo_url)
         setCategories(settings.categories)
-        setProducts(productsRes.products)
+        // Update cache with fresh order counts but don't change displayed order
         writeCache({
           storeName: settings.store_name,
           storeLogo: settings.store_logo_url,
