@@ -11,9 +11,14 @@ export function CatalogPage() {
   const { storeName, categories, products, loadingStore } = useStore()
   const { logout } = useAuth()
   const navigate = useNavigate()
-  const [searchParams] = useSearchParams()
+  const [searchParams, setSearchParams] = useSearchParams()
   const [view, setView] = useState<View>(searchParams.get('view') === 'categories' ? 'categories' : 'all')
   const [search, setSearch] = useState('')
+
+  function switchView(v: View) {
+    setView(v)
+    setSearchParams(v === 'categories' ? { view: 'categories' } : {}, { replace: true })
+  }
 
   function handleLogout() {
     logout()
@@ -42,7 +47,7 @@ export function CatalogPage() {
           <h1 className="text-lg font-bold text-gray-900">{storeName}</h1>
           <div className="flex gap-1">
             <button
-              onClick={() => setView('categories')}
+              onClick={() => switchView('categories')}
               className={`p-2 rounded-lg transition-colors ${view === 'categories' ? 'bg-green-100 text-green-700' : 'text-gray-400 hover:bg-gray-100'}`}
               title="Category view"
             >
@@ -51,7 +56,7 @@ export function CatalogPage() {
               </svg>
             </button>
             <button
-              onClick={() => setView('all')}
+              onClick={() => switchView('all')}
               className={`p-2 rounded-lg transition-colors ${view === 'all' ? 'bg-green-100 text-green-700' : 'text-gray-400 hover:bg-gray-100'}`}
               title="All products A–Z"
             >
