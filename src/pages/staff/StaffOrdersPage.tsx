@@ -33,15 +33,10 @@ export function StaffOrdersPage() {
   }
 
   useEffect(() => {
-    function fetchOrders() {
-      getAllOrders()
-        .then(res => setOrders(res.orders as Order[]))
-        .catch(console.error)
-        .finally(() => setLoading(false))
-    }
-    fetchOrders()
-    const interval = setInterval(fetchOrders, 30000)
-    return () => clearInterval(interval)
+    getAllOrders()
+      .then(res => setOrders(res.orders as Order[]))
+      .catch(console.error)
+      .finally(() => setLoading(false))
   }, [])
 
   function startBagging(order: Order) {
