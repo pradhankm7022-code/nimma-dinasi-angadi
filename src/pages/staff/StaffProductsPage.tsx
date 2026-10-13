@@ -6,6 +6,7 @@ import {
 } from '../../api'
 import { useStore } from '../../contexts/StoreContext'
 import type { Category, Product, ProductVariant } from '../../types'
+import { ImageUploader } from '../../components/staff/ImageUploader'
 
 type Tab = 'products' | 'categories'
 
@@ -167,10 +168,18 @@ export function StaffProductsPage() {
         <div className="px-4 pt-4 space-y-4 max-w-lg">
           {productError && <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg px-3 py-2">{productError}</div>}
 
+          {/* Image */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Image</label>
+            <ImageUploader
+              imageUrl={editingProduct.image_url}
+              onUpload={url => setEditingProduct({ ...editingProduct, image_url: url })}
+            />
+          </div>
+
           {[
             { label: 'Name (English)', field: 'name_en', placeholder: 'Sugar' },
             { label: 'Name (Kannada)', field: 'name_kn', placeholder: 'ಸಕ್ಕರೆ' },
-            { label: 'Image URL', field: 'image_url', placeholder: 'https://…' },
             { label: 'Search Keys (transliteration)', field: 'search_keys', placeholder: 'sakkare, sugar' },
           ].map(({ label, field, placeholder }) => (
             <div key={field}>
@@ -271,16 +280,12 @@ export function StaffProductsPage() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Image URL</label>
-            <input
-              type="text" value={editingCat.image_url} onChange={e => setEditingCat({ ...editingCat, image_url: e.target.value })}
-              placeholder="https://…"
-              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500"
+            <label className="block text-sm font-medium text-gray-700 mb-2">Image</label>
+            <ImageUploader
+              imageUrl={editingCat.image_url}
+              onUpload={url => setEditingCat({ ...editingCat, image_url: url })}
             />
           </div>
-          {editingCat.image_url && (
-            <img src={editingCat.image_url} alt="preview" className="w-24 h-24 rounded-xl object-cover border border-gray-100" />
-          )}
         </div>
       </div>
     )
