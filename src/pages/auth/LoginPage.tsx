@@ -2,11 +2,13 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { signIn } from '../../api'
 import { useAuth } from '../../contexts/AuthContext'
+import { useStore } from '../../contexts/StoreContext'
 
 type Step = 'ask' | 'signin'
 
 export function LoginPage() {
   const { login } = useAuth()
+  const { storeName, storeLogo } = useStore()
   const navigate = useNavigate()
   const [step, setStep] = useState<Step>('ask')
   const [email, setEmail] = useState('')
@@ -38,23 +40,45 @@ export function LoginPage() {
 
   if (step === 'ask') {
     return (
-      <div className="min-h-svh flex flex-col items-center justify-center bg-gray-50 px-4">
-        <div className="w-full max-w-sm">
-          <h1 className="text-2xl font-bold text-center text-gray-900 mb-1 select-none" onClick={handleTitleTap}>
-            Nimma Dinasi Angadi
+      <div className="min-h-svh flex flex-col bg-gray-50">
+        {/* Green hero banner */}
+        <div className="bg-green-600 flex flex-col items-center justify-center pt-16 pb-12 px-4 flex-1">
+          {/* Logo or initials */}
+          <div className="w-24 h-24 rounded-2xl overflow-hidden bg-white/20 flex items-center justify-center mb-5 shadow-lg">
+            {storeLogo ? (
+              <img src={storeLogo} alt={storeName} className="w-full h-full object-cover" />
+            ) : (
+              <span className="text-4xl font-bold text-white select-none" onClick={handleTitleTap}>
+                {storeName.charAt(0)}
+              </span>
+            )}
+          </div>
+
+          {/* Store name */}
+          <h1
+            className="text-3xl font-bold text-white text-center leading-tight select-none"
+            onClick={handleTitleTap}
+          >
+            {storeName}
           </h1>
-          <p className="text-sm text-center text-gray-500 mb-8">Are you a new user?</p>
+          <p className="text-green-100 text-sm mt-2 text-center">ನಿಮ್ಮ ದಿನಸಿ ಅಂಗಡಿ</p>
+        </div>
+
+        {/* Bottom card */}
+        <div className="bg-white rounded-t-3xl -mt-6 px-6 pt-8 pb-10 shadow-lg">
+          <p className="text-lg font-semibold text-gray-800 text-center mb-1">Welcome!</p>
+          <p className="text-sm text-gray-500 text-center mb-7">Are you shopping with us for the first time?</p>
 
           <div className="space-y-3">
             <button
               onClick={() => navigate('/signup')}
-              className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 rounded-xl text-sm transition-colors"
+              className="w-full bg-green-600 hover:bg-green-700 active:bg-green-800 text-white font-semibold py-3.5 rounded-xl text-sm transition-colors shadow-sm"
             >
               Yes, create an account
             </button>
             <button
               onClick={() => setStep('signin')}
-              className="w-full bg-white border border-gray-200 hover:bg-gray-50 text-gray-800 font-semibold py-3 rounded-xl text-sm transition-colors"
+              className="w-full bg-gray-50 border border-gray-200 hover:bg-gray-100 text-gray-800 font-semibold py-3.5 rounded-xl text-sm transition-colors"
             >
               No, I already have an account
             </button>
