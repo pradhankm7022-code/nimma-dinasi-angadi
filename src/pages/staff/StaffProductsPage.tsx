@@ -10,6 +10,15 @@ import { ImageUploader } from '../../components/staff/ImageUploader'
 
 type Tab = 'products' | 'categories'
 
+const STAFF_PRODUCTS_CACHE = 'nda_staff_products'
+
+function readProductsCache(): Product[] {
+  try { return JSON.parse(localStorage.getItem(STAFF_PRODUCTS_CACHE) || '[]') } catch { return [] }
+}
+function writeProductsCache(products: Product[]) {
+  try { localStorage.setItem(STAFF_PRODUCTS_CACHE, JSON.stringify(products)) } catch {}
+}
+
 const EMPTY_PRODUCT: Omit<Product, 'id'> = {
   name_en: '', name_kn: '', category_id: '', category: '', image_url: '', in_stock: true, variants: [], search_keys: '', order_count: 0,
 }
@@ -19,8 +28,9 @@ export function StaffProductsPage() {
   const [tab, setTab] = useState<Tab>('products')
 
   // Products state
-  const [products, setProducts] = useState<Product[]>([])
-  const [loadingProducts, setLoadingProducts] = useState(true)
+  const cached = readProductsCache()
+  const [products, setProducts] = useState<Product[]>(cached)
+  const [loadingProducts, setLoadingProducts] = useState(cached.length === 0)
   const [editingProduct, setEditingProduct] = useState<Product | null>(null)
   const [isNewProduct, setIsNewProduct] = useState(false)
   const [savingProduct, setSavingProduct] = useState(false)
@@ -36,7 +46,10 @@ export function StaffProductsPage() {
 
   useEffect(() => {
     getProducts()
-      .then(res => setProducts(res.products))
+      .then(res => {
+        setProducts(res.products)
+        writeProductsCache(res.products)
+      })
       .catch(console.error)
       .finally(() => setLoadingProducts(false))
   }, [])
@@ -61,10 +74,18 @@ export function StaffProductsPage() {
     try {
       if (isNewProduct) {
         const res = await createProduct(editingProduct)
-        setProducts(prev => [...prev, { ...editingProduct, id: res.id }])
+        setProducts(prev => {
+          const next = [...prev, { ...editingProduct, id: res.id }]
+          writeProductsCache(next)
+          return next
+        })
       } else {
         await updateProduct(editingProduct)
-        setProducts(prev => prev.map(p => p.id === editingProduct.id ? editingProduct : p))
+        setProducts(prev => {
+          const next = prev.map(p => p.id === editingProduct.id ? editingProduct : p)
+          writeProductsCache(next)
+          return next
+        })
       }
       setEditingProduct(null)
     } catch (err: unknown) {
@@ -77,7 +98,11 @@ export function StaffProductsPage() {
   async function handleDeleteProduct(id: string) {
     if (!confirm('Delete this product?')) return
     await deleteProduct(id)
-    setProducts(prev => prev.filter(p => p.id !== id))
+    setProducts(prev => {
+      const next = prev.filter(p => p.id !== id)
+      writeProductsCache(next)
+      return next
+    })
   }
 
   function updateVariant(idx: number, field: keyof ProductVariant, value: string | number | boolean) {
