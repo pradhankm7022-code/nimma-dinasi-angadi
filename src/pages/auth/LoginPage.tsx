@@ -48,17 +48,14 @@ export function LoginPage() {
             {storeLogo ? (
               <img src={storeLogo} alt={storeName} className="w-full h-full object-cover" />
             ) : (
-              <span className="text-4xl font-bold text-white select-none" onClick={handleTitleTap}>
+              <span className="text-4xl font-bold text-white select-none">
                 {storeName.charAt(0)}
               </span>
             )}
           </div>
 
           {/* Store name */}
-          <h1
-            className="text-3xl font-bold text-white text-center leading-tight select-none"
-            onClick={handleTitleTap}
-          >
+          <h1 className="text-3xl font-bold text-white text-center leading-tight select-none">
             {storeName}
           </h1>
           <p className="text-green-100 text-sm mt-2 text-center">ನಿಮ್ಮ ದಿನಸಿ ಅಂಗಡಿ</p>
