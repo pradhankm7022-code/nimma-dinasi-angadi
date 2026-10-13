@@ -2,6 +2,7 @@ import { BrowserRouter, Navigate, Route, Routes, useLocation, useNavigate } from
 import { useEffect, useRef } from 'react'
 import { RequireAuth, RequireStaff } from './components/ProtectedRoute'
 import { AuthProvider } from './contexts/AuthContext'
+import { LangProvider } from './contexts/LangContext'
 import { StoreProvider } from './contexts/StoreContext'
 import { ForgotPasswordPage } from './pages/auth/ForgotPasswordPage'
 import { LoginPage } from './pages/auth/LoginPage'
@@ -70,6 +71,7 @@ function BackButtonHandler() {
 export default function App() {
   return (
     <AuthProvider>
+      <LangProvider>
       <StoreProvider>
         <BrowserRouter>
           <BackButtonHandler />
@@ -104,6 +106,7 @@ export default function App() {
           </Routes>
         </BrowserRouter>
       </StoreProvider>
+      </LangProvider>
     </AuthProvider>
   )
 }

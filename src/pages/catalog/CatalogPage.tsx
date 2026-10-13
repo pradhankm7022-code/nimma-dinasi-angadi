@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { ProductCard } from '../../components/catalog/ProductCard'
 import { BottomNav } from '../../components/ui/BottomNav'
+import { KaButton } from '../../components/ui/KaButton'
 import { useAuth } from '../../contexts/AuthContext'
 import { useStore } from '../../contexts/StoreContext'
 
@@ -46,6 +47,7 @@ export function CatalogPage() {
         <div className="flex items-center justify-between">
           <h1 className="text-lg font-bold text-gray-900">{storeName}</h1>
           <div className="flex gap-1">
+            <KaButton />
             <button
               onClick={() => switchView('categories')}
               className={`p-2 rounded-lg transition-colors ${view === 'categories' ? 'bg-green-100 text-green-700' : 'text-gray-400 hover:bg-gray-100'}`}

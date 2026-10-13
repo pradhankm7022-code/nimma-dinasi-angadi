@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import type { Product } from '../../types'
 import { useStore } from '../../contexts/StoreContext'
+import { useLang } from '../../contexts/LangContext'
 
 interface Props {
   product: Product
@@ -8,6 +9,7 @@ interface Props {
 
 export function ProductCard({ product }: Props) {
   const { addToCart, cart, updateCartQty } = useStore()
+  const { lang } = useLang()
   const defaultIdx = product.variants.findIndex(v => v.default) ?? 0
   const [variantIdx, setVariantIdx] = useState(defaultIdx >= 0 ? defaultIdx : 0)
 
@@ -67,8 +69,12 @@ export function ProductCard({ product }: Props) {
 
       {/* Details */}
       <div className="flex-1 min-w-0 flex flex-col gap-1">
-        <p className="text-sm font-semibold text-gray-900 truncate">{product.name_en}</p>
-        <p className="text-xs text-gray-400 truncate">{product.name_kn}</p>
+        <p className="text-sm font-semibold text-gray-900 truncate">
+          {lang === 'kn' && product.name_kn ? product.name_kn : product.name_en}
+        </p>
+        {lang === 'kn' && product.name_kn && (
+          <p className="text-xs text-gray-400 truncate">{product.name_en}</p>
+        )}
 
         {/* Variant pills */}
         {product.variants.length > 0 && (

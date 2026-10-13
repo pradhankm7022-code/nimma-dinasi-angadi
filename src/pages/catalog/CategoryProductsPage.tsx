@@ -2,6 +2,7 @@ import { useMemo } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { ProductCard } from '../../components/catalog/ProductCard'
 import { BottomNav } from '../../components/ui/BottomNav'
+import { KaButton } from '../../components/ui/KaButton'
 import { useStore } from '../../contexts/StoreContext'
 
 export function CategoryProductsPage() {
@@ -26,7 +27,8 @@ export function CategoryProductsPage() {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
           </svg>
         </button>
-        <h1 className="text-lg font-bold text-gray-900">{categoryName}</h1>
+        <h1 className="text-lg font-bold text-gray-900 flex-1">{categoryName}</h1>
+        <KaButton />
       </div>
 
       <div className="px-4 pt-4 space-y-3">

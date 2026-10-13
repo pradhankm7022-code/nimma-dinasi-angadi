@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { getAllOrders, finishBagging, updateOrderStatus } from '../../api'
 import type { CartItem, Order } from '../../types'
+import { KaButton } from '../../components/ui/KaButton'
+import { useLang } from '../../contexts/LangContext'
 
 const STATUS_COLORS: Record<string, string> = {
   Pending: 'bg-yellow-100 text-yellow-700',
@@ -16,9 +18,8 @@ export function StaffOrdersPage() {
   const [loading, setLoading] = useState(true)
   const [updating, setUpdating] = useState<string | null>(null)
   const [expanded, setExpanded] = useState<string | null>(null)
-  // orderId -> array of item states
   const [bagging, setBagging] = useState<Record<string, ItemState[]>>({})
-
+  const { lang } = useLang()
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -84,6 +85,7 @@ export function StaffOrdersPage() {
       <div className="bg-white border-b border-gray-100 sticky top-0 z-10 px-4 py-3 flex items-center justify-between">
         <h1 className="text-lg font-bold text-gray-900">Orders</h1>
         <div className="flex items-center gap-3">
+          <KaButton />
           <Link to="/staff/products" className="text-sm text-green-600 font-medium hover:underline">Products</Link>
           <button onClick={handleLogout} className="p-2 text-gray-400 hover:text-red-500 hover:bg-gray-100 rounded-lg transition-colors" title="Logout">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -163,8 +165,7 @@ export function StaffOrdersPage() {
                                 state === 'unavailable' ? 'line-through text-red-400' :
                                 state === 'bagged' ? 'text-gray-400' : 'text-gray-700'
                               }`}>
-                                {item.product_name_en}
-                                {item.product_name_kn && <span className="text-gray-400 ml-1">· {item.product_name_kn}</span>}
+                                  {lang === 'kn' && item.product_name_kn ? item.product_name_kn : item.product_name_en}
                                 <span className="text-gray-400 ml-1">({item.variant_label})</span>
                               </span>
                             </div>

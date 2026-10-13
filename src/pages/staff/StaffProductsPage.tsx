@@ -5,8 +5,10 @@ import {
   getProducts, updateCategory, updateProduct
 } from '../../api'
 import { useStore } from '../../contexts/StoreContext'
+import { useLang } from '../../contexts/LangContext'
 import type { Category, Product, ProductVariant } from '../../types'
 import { ImageUploader } from '../../components/staff/ImageUploader'
+import { KaButton } from '../../components/ui/KaButton'
 
 type Tab = 'products' | 'categories'
 
@@ -25,6 +27,7 @@ const EMPTY_PRODUCT: Omit<Product, 'id'> = {
 
 export function StaffProductsPage() {
   const { categories, setCategories } = useStore()
+  const { lang } = useLang()
   const [tab, setTab] = useState<Tab>('products')
 
   // Products state
@@ -337,12 +340,15 @@ export function StaffProductsPage() {
           </Link>
           <h1 className="text-lg font-bold text-gray-900">Manage</h1>
         </div>
-        <button
-          onClick={() => tab === 'products' ? openNewProduct() : openNewCat()}
-          className="bg-green-600 hover:bg-green-700 text-white text-sm font-semibold px-3 py-1.5 rounded-lg transition-colors"
-        >
-          + Add
-        </button>
+        <div className="flex items-center gap-2">
+          <KaButton />
+          <button
+            onClick={() => tab === 'products' ? openNewProduct() : openNewCat()}
+            className="bg-green-600 hover:bg-green-700 text-white text-sm font-semibold px-3 py-1.5 rounded-lg transition-colors"
+          >
+            + Add
+          </button>
+        </div>
       </div>
 
       {/* Tabs */}
@@ -393,7 +399,9 @@ export function StaffProductsPage() {
                   )}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-gray-900 truncate">{p.name_en}</p>
+                  <p className="text-sm font-semibold text-gray-900 truncate">
+                    {lang === 'kn' && p.name_kn ? p.name_kn : p.name_en}
+                  </p>
                   <p className="text-xs text-gray-400">{p.category} · {p.variants.map(v => v.label).join(', ')}</p>
                   {!p.in_stock && <span className="text-xs text-red-500 font-medium">Out of stock</span>}
                 </div>
