@@ -70,18 +70,19 @@ export function ProductCard({ product }: Props) {
         <p className="text-sm font-semibold text-gray-900 truncate">{product.name_en}</p>
         <p className="text-xs text-gray-400 truncate">{product.name_kn}</p>
 
-        {/* Variant slider */}
+        {/* Variant pills */}
         {product.variants.length > 0 && (
           <div
-            className="flex gap-1 mt-0.5 overflow-hidden"
+            className="flex gap-1 mt-0.5 overflow-x-auto scrollbar-hide"
             onTouchStart={onTouchStart}
             onTouchEnd={onTouchEnd}
+            style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
           >
             {product.variants.map((v, i) => (
               <button
                 key={v.label}
                 onClick={() => setVariantIdx(i)}
-                className={`text-xs px-2 py-0.5 rounded-full border transition-colors whitespace-nowrap ${
+                className={`flex-shrink-0 text-xs px-2 py-0.5 rounded-full border transition-colors whitespace-nowrap ${
                   i === variantIdx
                     ? 'bg-green-600 border-green-600 text-white'
                     : 'bg-gray-50 border-gray-200 text-gray-600'

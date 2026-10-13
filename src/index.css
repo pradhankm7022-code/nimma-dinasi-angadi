@@ -15,3 +15,7 @@ body {
 #root {
   min-height: 100svh;
 }
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
