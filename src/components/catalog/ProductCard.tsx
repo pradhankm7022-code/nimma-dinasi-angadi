@@ -75,6 +75,9 @@ export function ProductCard({ product }: Props) {
         {lang === 'kn' && product.name_kn && (
           <p className="text-xs text-gray-400 truncate">{product.name_en}</p>
         )}
+        {lang === 'en' && product.name_kn && (
+          <p className="text-xs text-gray-400 truncate">{product.name_kn}</p>
+        )}
 
         {/* Variant pills */}
         {product.variants.length > 0 && (
