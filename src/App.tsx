@@ -1,5 +1,5 @@
 import { BrowserRouter, Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { RequireAuth, RequireStaff } from './components/ProtectedRoute'
 import { AuthProvider } from './contexts/AuthContext'
 import { StoreProvider } from './contexts/StoreContext'
@@ -13,6 +13,26 @@ import { OrdersPage } from './pages/orders/OrdersPage'
 import { StaffLoginPage } from './pages/staff/StaffLoginPage'
 import { StaffOrdersPage } from './pages/staff/StaffOrdersPage'
 import { StaffProductsPage } from './pages/staff/StaffProductsPage'
+
+const scrollCache = new Map<string, number>()
+
+function ScrollRestoration() {
+  const { pathname, search } = useLocation()
+  const key = pathname + search
+  const prevKey = useRef(key)
+
+  useEffect(() => {
+    // Save scroll position of the page we're leaving
+    scrollCache.set(prevKey.current, window.scrollY)
+    prevKey.current = key
+
+    // Restore scroll position for the page we're entering
+    const saved = scrollCache.get(key)
+    window.scrollTo(0, saved ?? 0)
+  }, [key])
+
+  return null
+}
 
 function BackButtonHandler() {
   const navigate = useNavigate()
@@ -53,6 +73,7 @@ export default function App() {
       <StoreProvider>
         <BrowserRouter>
           <BackButtonHandler />
+          <ScrollRestoration />
           <Routes>
             {/* Auth */}
             <Route path="/login" element={<LoginPage />} />
