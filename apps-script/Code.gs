@@ -3,7 +3,7 @@
 //  Deploy as: Web App → Execute as Me → Anyone can access
 // ============================================================
 
-var SS = SpreadsheetApp.getActiveSpreadsheet();
+var SS = SpreadsheetApp.openById(PropertiesService.getScriptProperties().getProperty('SPREADSHEET_ID'));
 
 // Sheet helpers
 function sheet(name) { return SS.getSheetByName(name); }
@@ -71,12 +71,12 @@ function doGet(e) {
     if (action === 'updateOrderStatus')   return updateOrderStatus({ orderId: p.orderId, status: p.status });
     if (action === 'finishBagging')       return finishBagging({ orderId: p.orderId, items: p.items });
     if (action === 'staffLogin')          return staffLogin({ pin: p.pin });
-    if (action === 'createProduct')       return createProduct({ name_en: p.name_en, name_kn: p.name_kn, category: p.category, image_url: p.image_url, in_stock: p.in_stock, variants: p.variants, search_keys: p.search_keys });
-    if (action === 'updateProduct')       return updateProduct({ id: p.id, name_en: p.name_en, name_kn: p.name_kn, category: p.category, image_url: p.image_url, in_stock: p.in_stock, variants: p.variants, search_keys: p.search_keys });
+    if (action === 'createProduct')       return createProduct({ name_en: p.name_en, name_kn: p.name_kn, category_id: p.category_id, image_url: p.image_url, in_stock: p.in_stock, variants: p.variants, search_keys: p.search_keys });
+    if (action === 'updateProduct')       return updateProduct({ id: p.id, name_en: p.name_en, name_kn: p.name_kn, category_id: p.category_id, image_url: p.image_url, in_stock: p.in_stock, variants: p.variants, search_keys: p.search_keys });
     if (action === 'deleteProduct')       return deleteProduct({ id: p.id });
     if (action === 'createCategory')      return createCategory({ name: p.name, image_url: p.image_url });
-    if (action === 'updateCategory')      return updateCategory({ oldName: p.oldName, name: p.name, image_url: p.image_url });
-    if (action === 'deleteCategory')      return deleteCategory({ name: p.name });
+    if (action === 'updateCategory')      return updateCategory({ id: p.id, name: p.name, image_url: p.image_url });
+    if (action === 'deleteCategory')      return deleteCategory({ id: p.id });
     if (action === 'savePushSubscription') return savePushSubscription({ subscription: p.subscription });
     return err('Unknown action: ' + action);
   } catch (ex) {
@@ -91,8 +91,11 @@ function getBootstrap() {
   settingRows.forEach(function(r) { map[r.key] = r.value; });
 
   var categories = sheetData('Categories').map(function(r) {
-    return { name: r.name, image_url: r.image_url };
+    return { id: r.id, name: r.name, image_url: r.image_url };
   });
+
+  var catMap = {};
+  categories.forEach(function(c) { catMap[c.id] = c.name; });
 
   var products = sheetData('Products')
     .filter(function(r) { return r.id; })
@@ -103,7 +106,8 @@ function getBootstrap() {
         id: r.id,
         name_en: r.name_en,
         name_kn: r.name_kn,
-        category: r.category,
+        category_id: r.category_id,
+        category: catMap[r.category_id] || '',
         image_url: r.image_url,
         in_stock: r.in_stock === true || r.in_stock === 'TRUE',
         variants: variants,
@@ -127,7 +131,7 @@ function getSettings() {
 
   var catRows = sheetData('Categories');
   var categories = catRows.map(function(r) {
-    return { name: r.name, image_url: r.image_url };
+    return { id: r.id, name: r.name, image_url: r.image_url };
   });
 
   return ok({
@@ -143,6 +147,10 @@ function getSettings() {
 // ============================================================
 function getProducts() {
   var rows = sheetData('Products');
+  var categories = sheetData('Categories');
+  var catMap = {};
+  categories.forEach(function(c) { catMap[c.id] = c.name; });
+
   var products = rows
     .filter(function(r) { return r.id; })
     .map(function(r) {
@@ -152,7 +160,8 @@ function getProducts() {
         id: r.id,
         name_en: r.name_en,
         name_kn: r.name_kn,
-        category: r.category,
+        category_id: r.category_id,
+        category: catMap[r.category_id] || '',
         image_url: r.image_url,
         in_stock: r.in_stock === true || r.in_stock === 'TRUE',
         variants: variants,
@@ -165,20 +174,17 @@ function getProducts() {
 
 function createCategory(body) {
   var s = sheet('Categories');
-  var data = s.getDataRange().getValues();
-  for (var i = 1; i < data.length; i++) {
-    if (data[i][0] === body.name) return err('Category already exists');
-  }
-  s.appendRow([body.name, body.image_url || '']);
-  return ok();
+  var id = uuid();
+  s.appendRow([id, body.name, body.image_url || '']);
+  return ok({ id: id });
 }
 
 function updateCategory(body) {
   var s = sheet('Categories');
   var data = s.getDataRange().getValues();
   for (var i = 1; i < data.length; i++) {
-    if (data[i][0] === body.oldName) {
-      s.getRange(i + 1, 1, 1, 2).setValues([[body.name, body.image_url || '']]);
+    if (data[i][0] === body.id) {
+      s.getRange(i + 1, 1, 1, 3).setValues([[body.id, body.name, body.image_url || '']]);
       return ok();
     }
   }
@@ -189,7 +195,7 @@ function deleteCategory(body) {
   var s = sheet('Categories');
   var data = s.getDataRange().getValues();
   for (var i = 1; i < data.length; i++) {
-    if (data[i][0] === body.name) {
+    if (data[i][0] === body.id) {
       s.deleteRow(i + 1);
       return ok();
     }
@@ -201,7 +207,7 @@ function createProduct(body) {
   var s = sheet('Products');
   var id = uuid();
   s.appendRow([
-    id, body.name_en, body.name_kn, body.category, body.image_url || '',
+    id, body.name_en, body.name_kn, body.category_id, body.image_url || '',
     body.in_stock ? 'TRUE' : 'FALSE',
     JSON.stringify(body.variants || []),
     body.search_keys || '',
@@ -217,7 +223,7 @@ function updateProduct(body) {
     if (data[i][0] === body.id) {
       var existingCount = Number(data[i][8]) || 0;
       s.getRange(i + 1, 1, 1, 9).setValues([[
-        body.id, body.name_en, body.name_kn, body.category, body.image_url || '',
+        body.id, body.name_en, body.name_kn, body.category_id, body.image_url || '',
         body.in_stock ? 'TRUE' : 'FALSE',
         JSON.stringify(body.variants || []),
         body.search_keys || '',
@@ -468,3 +474,4 @@ function incrementOrderCounts(items) {
     }
   });
 }
+

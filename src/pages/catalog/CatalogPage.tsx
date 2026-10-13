@@ -100,8 +100,8 @@ export function CatalogPage() {
           <div className="grid grid-cols-2 gap-3">
             {categories.map(cat => (
               <Link
-                key={cat.name}
-                to={`/category/${encodeURIComponent(cat.name)}`}
+                key={cat.id}
+                to={`/category/${cat.id}`}
                 className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden active:scale-95 transition-transform"
               >
                 <div className="aspect-square bg-gray-100 overflow-hidden">

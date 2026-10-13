@@ -5,18 +5,17 @@ import { BottomNav } from '../../components/ui/BottomNav'
 import { useStore } from '../../contexts/StoreContext'
 
 export function CategoryProductsPage() {
-  const { name } = useParams<{ name: string }>()
-  const { products, loadingStore } = useStore()
+  const { id } = useParams<{ id: string }>()
+  const { products, categories, loadingStore } = useStore()
   const navigate = useNavigate()
 
-  const categoryProducts = useMemo(() => {
-    const decoded = decodeURIComponent(name ?? '')
-    return products
-      .filter(p => p.category === decoded)
-      .sort((a, b) => a.name_en.localeCompare(b.name_en))
-  }, [products, name])
+  const categoryName = categories.find(c => c.id === id)?.name ?? ''
 
-  const decodedName = decodeURIComponent(name ?? '')
+  const categoryProducts = useMemo(() => {
+    return products
+      .filter(p => p.category_id === id)
+      .sort((a, b) => a.name_en.localeCompare(b.name_en))
+  }, [products, id])
 
   return (
     <div className="min-h-svh bg-gray-50 pb-20">
@@ -27,7 +26,7 @@ export function CategoryProductsPage() {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
           </svg>
         </button>
-        <h1 className="text-lg font-bold text-gray-900">{decodedName}</h1>
+        <h1 className="text-lg font-bold text-gray-900">{categoryName}</h1>
       </div>
 
       <div className="px-4 pt-4 space-y-3">

@@ -62,7 +62,7 @@ export default function App() {
             {/* Customer (protected) */}
             <Route element={<RequireAuth />}>
               <Route path="/" element={<CatalogPage />} />
-              <Route path="/category/:name" element={<CategoryProductsPage />} />
+              <Route path="/category/:id" element={<CategoryProductsPage />} />
               <Route path="/cart" element={<CartPage />} />
               <Route path="/orders" element={<OrdersPage />} />
             </Route>

@@ -10,7 +10,7 @@ import type { Category, Product, ProductVariant } from '../../types'
 type Tab = 'products' | 'categories'
 
 const EMPTY_PRODUCT: Omit<Product, 'id'> = {
-  name_en: '', name_kn: '', category: '', image_url: '', in_stock: true, variants: [], search_keys: '', order_count: 0,
+  name_en: '', name_kn: '', category_id: '', category: '', image_url: '', in_stock: true, variants: [], search_keys: '', order_count: 0,
 }
 
 export function StaffProductsPage() {
@@ -30,7 +30,7 @@ export function StaffProductsPage() {
   const [isNewCat, setIsNewCat] = useState(false)
   const [savingCat, setSavingCat] = useState(false)
   const [catError, setCatError] = useState('')
-  const [oldCatName, setOldCatName] = useState('')
+  const [editingCatId, setEditingCatId] = useState('')
 
   useEffect(() => {
     getProducts()
@@ -104,16 +104,16 @@ export function StaffProductsPage() {
 
   // ── Category actions ─────────────────────────────────────
   function openNewCat() {
-    setEditingCat({ name: '', image_url: '' })
+    setEditingCat({ id: '', name: '', image_url: '' })
     setIsNewCat(true)
-    setOldCatName('')
+    setEditingCatId('')
     setCatError('')
   }
 
   function openEditCat(cat: Category) {
     setEditingCat({ ...cat })
     setIsNewCat(false)
-    setOldCatName(cat.name)
+    setEditingCatId(cat.id)
     setCatError('')
   }
 
@@ -126,11 +126,11 @@ export function StaffProductsPage() {
     setCatError('')
     try {
       if (isNewCat) {
-        await createCategory(editingCat.name, editingCat.image_url)
-        setCategories([...categories, editingCat])
+        const res = await createCategory(editingCat.name, editingCat.image_url)
+        setCategories([...categories, { ...editingCat, id: res.id }])
       } else {
-        await updateCategory(oldCatName, editingCat.name, editingCat.image_url)
-        setCategories(categories.map(c => c.name === oldCatName ? editingCat : c))
+        await updateCategory(editingCatId, editingCat.name, editingCat.image_url)
+        setCategories(categories.map(c => c.id === editingCatId ? { ...editingCat, id: editingCatId } : c))
       }
       setEditingCat(null)
     } catch (err: unknown) {
@@ -140,10 +140,10 @@ export function StaffProductsPage() {
     }
   }
 
-  async function handleDeleteCat(name: string) {
-    if (!confirm(`Delete category "${name}"?`)) return
-    await deleteCategory(name)
-    setCategories(categories.filter(c => c.name !== name))
+  async function handleDeleteCat(cat: Category) {
+    if (!confirm(`Delete category "${cat.name}"?`)) return
+    await deleteCategory(cat.id)
+    setCategories(categories.filter(c => c.id !== cat.id))
   }
 
   // ── Product edit screen ───────────────────────────────────
@@ -187,13 +187,13 @@ export function StaffProductsPage() {
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
             <select
-              value={editingProduct.category}
-              onChange={e => setEditingProduct({ ...editingProduct, category: e.target.value })}
+              value={editingProduct.category_id}
+              onChange={e => setEditingProduct({ ...editingProduct, category_id: e.target.value, category: categories.find(c => c.id === e.target.value)?.name ?? '' })}
               className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500 bg-white"
             >
               <option value="">Select category…</option>
               {categories.map(c => (
-                <option key={c.name} value={c.name}>{c.name}</option>
+                <option key={c.id} value={c.id}>{c.name}</option>
               ))}
             </select>
           </div>
@@ -353,7 +353,7 @@ export function StaffProductsPage() {
             <div className="text-center text-gray-400 py-16 text-sm">No categories yet</div>
           ) : (
             categories.map(cat => (
-              <div key={cat.name} className="bg-white rounded-xl border border-gray-100 shadow-sm p-3 flex gap-3 items-center">
+              <div key={cat.id} className="bg-white rounded-xl border border-gray-100 shadow-sm p-3 flex gap-3 items-center">
                 <div className="w-12 h-12 flex-shrink-0 rounded-lg overflow-hidden bg-gray-100">
                   {cat.image_url ? (
                     <img src={cat.image_url} alt={cat.name} className="w-full h-full object-cover" />
@@ -366,7 +366,7 @@ export function StaffProductsPage() {
                 </div>
                 <div className="flex gap-2 flex-shrink-0">
                   <button onClick={() => openEditCat(cat)} className="text-xs text-green-600 font-medium hover:underline">Edit</button>
-                  <button onClick={() => handleDeleteCat(cat.name)} className="text-xs text-red-500 font-medium hover:underline">Delete</button>
+                  <button onClick={() => handleDeleteCat(cat)} className="text-xs text-red-500 font-medium hover:underline">Delete</button>
                 </div>
               </div>
             ))

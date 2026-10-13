@@ -54,21 +54,21 @@ export const staffLogin = (pin: string) =>
 
 // Category CRUD (staff)
 export const createCategory = (name: string, image_url: string) =>
-  call<{ ok: true }>({ action: 'createCategory', name, image_url })
+  call<{ ok: true; id: string }>({ action: 'createCategory', name, image_url })
 
-export const updateCategory = (oldName: string, name: string, image_url: string) =>
-  call<{ ok: true }>({ action: 'updateCategory', oldName, name, image_url })
+export const updateCategory = (id: string, name: string, image_url: string) =>
+  call<{ ok: true }>({ action: 'updateCategory', id, name, image_url })
 
-export const deleteCategory = (name: string) =>
-  call<{ ok: true }>({ action: 'deleteCategory', name })
+export const deleteCategory = (id: string) =>
+  call<{ ok: true }>({ action: 'deleteCategory', id })
 
 // Product CRUD (staff)
-export const createProduct = (product: Omit<Product, 'id'>) =>
+export const createProduct = (product: Omit<Product, 'id' | 'category'>) =>
   call<{ ok: true; id: string }>({
     action: 'createProduct',
     name_en: product.name_en,
     name_kn: product.name_kn,
-    category: product.category,
+    category_id: product.category_id,
     image_url: product.image_url,
     in_stock: product.in_stock,
     variants: product.variants,
@@ -81,7 +81,7 @@ export const updateProduct = (product: Product) =>
     id: product.id,
     name_en: product.name_en,
     name_kn: product.name_kn,
-    category: product.category,
+    category_id: product.category_id,
     image_url: product.image_url,
     in_stock: product.in_stock,
     variants: product.variants,

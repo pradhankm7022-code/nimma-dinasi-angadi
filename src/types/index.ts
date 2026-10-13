@@ -8,6 +8,7 @@ export interface Product {
   id: string
   name_en: string
   name_kn: string
+  category_id: string
   category: string
   image_url: string
   in_stock: boolean
@@ -17,6 +18,7 @@ export interface Product {
 }
 
 export interface Category {
+  id: string
   name: string
   image_url: string
 }
