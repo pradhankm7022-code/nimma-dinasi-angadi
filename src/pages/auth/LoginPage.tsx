@@ -73,7 +73,7 @@ export function LoginPage() {
           </svg>
           Back
         </button>
-        <h1 className="text-2xl font-bold text-center text-gray-900 mb-1">Welcome back</h1>
+        <h1 className="text-2xl font-bold text-center text-gray-900 mb-1 select-none" onClick={handleTitleTap}>Welcome back</h1>
         <p className="text-sm text-center text-gray-500 mb-6">Sign in to your account</p>
 
         <form onSubmit={handleSubmit} className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 space-y-4">
