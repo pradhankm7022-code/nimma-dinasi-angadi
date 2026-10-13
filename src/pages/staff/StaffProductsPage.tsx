@@ -24,6 +24,7 @@ export function StaffProductsPage() {
   const [isNewProduct, setIsNewProduct] = useState(false)
   const [savingProduct, setSavingProduct] = useState(false)
   const [productError, setProductError] = useState('')
+  const [search, setSearch] = useState('')
 
   // Categories state
   const [editingCat, setEditingCat] = useState<Category | null>(null)
@@ -320,14 +321,38 @@ export function StaffProductsPage() {
         ))}
       </div>
 
+      {/* Search bar — products only */}
+      {tab === 'products' && (
+        <div className="px-4 pt-3 bg-white border-b border-gray-100">
+          <div className="relative mb-3">
+            <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35M17 11A6 6 0 105 11a6 6 0 0012 0z" />
+            </svg>
+            <input
+              type="search" value={search} onChange={e => setSearch(e.target.value)}
+              placeholder="Search products…"
+              className="w-full bg-gray-100 rounded-xl pl-9 pr-3 py-2 text-sm outline-none focus:ring-2 focus:ring-green-400"
+            />
+          </div>
+        </div>
+      )}
+
       <div className="px-4 pt-4 space-y-3">
-        {tab === 'products' ? (
-          loadingProducts ? (
+        {tab === 'products' ? (() => {
+          const q = search.trim().toLowerCase()
+          const filtered = q
+            ? products.filter(p =>
+                p.name_en.toLowerCase().includes(q) ||
+                p.name_kn.toLowerCase().includes(q) ||
+                p.category.toLowerCase().includes(q)
+              )
+            : products
+          return loadingProducts ? (
             <div className="text-center text-gray-400 py-16 text-sm">Loading…</div>
-          ) : products.length === 0 ? (
-            <div className="text-center text-gray-400 py-16 text-sm">No products yet</div>
+          ) : filtered.length === 0 ? (
+            <div className="text-center text-gray-400 py-16 text-sm">{products.length === 0 ? 'No products yet' : 'No results'}</div>
           ) : (
-            products.map(p => (
+            filtered.map(p => (
               <div key={p.id} className="bg-white rounded-xl border border-gray-100 shadow-sm p-3 flex gap-3 items-center">
                 <div className="w-12 h-12 flex-shrink-0 rounded-lg overflow-hidden bg-gray-100">
                   {p.image_url ? (
@@ -348,7 +373,7 @@ export function StaffProductsPage() {
               </div>
             ))
           )
-        ) : (
+        })() ) : (
           categories.length === 0 ? (
             <div className="text-center text-gray-400 py-16 text-sm">No categories yet</div>
           ) : (
