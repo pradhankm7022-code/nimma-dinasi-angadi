@@ -33,10 +33,15 @@ export function StaffOrdersPage() {
   }
 
   useEffect(() => {
-    getAllOrders()
-      .then(res => setOrders(res.orders as Order[]))
-      .catch(console.error)
-      .finally(() => setLoading(false))
+    function fetchOrders() {
+      getAllOrders()
+        .then(res => setOrders(res.orders as Order[]))
+        .catch(console.error)
+        .finally(() => setLoading(false))
+    }
+    fetchOrders()
+    const interval = setInterval(fetchOrders, 30000)
+    return () => clearInterval(interval)
   }, [])
 
   function startBagging(order: Order) {
@@ -164,6 +169,7 @@ export function StaffOrdersPage() {
                                 state === 'bagged' ? 'text-gray-400' : 'text-gray-700'
                               }`}>
                                 {item.product_name_en}
+                                {item.product_name_kn && <span className="text-gray-400 ml-1">· {item.product_name_kn}</span>}
                                 <span className="text-gray-400 ml-1">({item.variant_label})</span>
                               </span>
                             </div>
