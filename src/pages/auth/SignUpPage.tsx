@@ -18,6 +18,7 @@ export function SignUpPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError('')
+    if (form.password.length < 6) { setError('Password must be at least 6 characters'); return }
     setLoading(true)
     try {
       const res = await signUp(form.name, form.email, form.password, form.phone)
@@ -41,11 +42,11 @@ export function SignUpPage() {
             <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg px-3 py-2">{error}</div>
           )}
           {[
-            { label: 'Full Name', field: 'name', type: 'text', placeholder: 'Ravi Kumar' },
-            { label: 'Email', field: 'email', type: 'email', placeholder: 'you@example.com' },
-            { label: 'Phone', field: 'phone', type: 'tel', placeholder: '9876543210' },
-            { label: 'Password', field: 'password', type: 'password', placeholder: '••••••••' },
-          ].map(({ label, field, type, placeholder }) => (
+            { label: 'Full Name', field: 'name', type: 'text', placeholder: 'Ravi Kumar', hint: '' },
+            { label: 'Email', field: 'email', type: 'email', placeholder: 'you@example.com', hint: '' },
+            { label: 'Phone', field: 'phone', type: 'tel', placeholder: '9876543210', hint: '' },
+            { label: 'Set Password', field: 'password', type: 'password', placeholder: '••••••••', hint: 'At least 6 characters' },
+          ].map(({ label, field, type, placeholder, hint }) => (
             <div key={field}>
               <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
               <input
@@ -53,6 +54,7 @@ export function SignUpPage() {
                 placeholder={placeholder}
                 className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500"
               />
+              {hint && <p className="text-xs text-gray-400 mt-1">{hint}</p>}
             </div>
           ))}
           <button

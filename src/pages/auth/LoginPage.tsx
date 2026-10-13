@@ -1,11 +1,14 @@
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { signIn } from '../../api'
 import { useAuth } from '../../contexts/AuthContext'
+
+type Step = 'ask' | 'signin'
 
 export function LoginPage() {
   const { login } = useAuth()
   const navigate = useNavigate()
+  const [step, setStep] = useState<Step>('ask')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
@@ -15,10 +18,7 @@ export function LoginPage() {
   function handleTitleTap() {
     const next = tapCount + 1
     setTapCount(next)
-    if (next >= 5) {
-      setTapCount(0)
-      navigate('/staff/login')
-    }
+    if (next >= 5) { setTapCount(0); navigate('/staff/login') }
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -36,10 +36,44 @@ export function LoginPage() {
     }
   }
 
+  if (step === 'ask') {
+    return (
+      <div className="min-h-svh flex flex-col items-center justify-center bg-gray-50 px-4">
+        <div className="w-full max-w-sm">
+          <h1 className="text-2xl font-bold text-center text-gray-900 mb-1 select-none" onClick={handleTitleTap}>
+            Nimma Dinasi Angadi
+          </h1>
+          <p className="text-sm text-center text-gray-500 mb-8">Are you a new user?</p>
+
+          <div className="space-y-3">
+            <button
+              onClick={() => navigate('/signup')}
+              className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 rounded-xl text-sm transition-colors"
+            >
+              Yes, create an account
+            </button>
+            <button
+              onClick={() => setStep('signin')}
+              className="w-full bg-white border border-gray-200 hover:bg-gray-50 text-gray-800 font-semibold py-3 rounded-xl text-sm transition-colors"
+            >
+              No, I already have an account
+            </button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-svh flex flex-col items-center justify-center bg-gray-50 px-4">
       <div className="w-full max-w-sm">
-        <h1 className="text-2xl font-bold text-center text-gray-900 mb-1 select-none" onClick={handleTitleTap}>Welcome back</h1>
+        <button onClick={() => setStep('ask')} className="flex items-center gap-1 text-sm text-gray-500 mb-4 hover:text-gray-700">
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          </svg>
+          Back
+        </button>
+        <h1 className="text-2xl font-bold text-center text-gray-900 mb-1">Welcome back</h1>
         <p className="text-sm text-center text-gray-500 mb-6">Sign in to your account</p>
 
         <form onSubmit={handleSubmit} className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 space-y-4">
@@ -70,12 +104,8 @@ export function LoginPage() {
           </button>
         </form>
 
-        <div className="text-center mt-4 space-y-2">
-          <Link to="/forgot-password" className="block text-sm text-green-600 hover:underline">Forgot password?</Link>
-          <p className="text-sm text-gray-500">
-            No account?{' '}
-            <Link to="/signup" className="text-green-600 hover:underline font-medium">Sign up</Link>
-          </p>
+        <div className="text-center mt-4">
+          <a href="/forgot-password" className="text-sm text-green-600 hover:underline">Forgot password?</a>
         </div>
       </div>
     </div>
