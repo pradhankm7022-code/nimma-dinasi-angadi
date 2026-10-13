@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { ProductCard } from '../../components/catalog/ProductCard'
 import { BottomNav } from '../../components/ui/BottomNav'
 import { useAuth } from '../../contexts/AuthContext'
@@ -11,7 +11,8 @@ export function CatalogPage() {
   const { storeName, categories, products, loadingStore } = useStore()
   const { logout } = useAuth()
   const navigate = useNavigate()
-  const [view, setView] = useState<View>('all')
+  const [searchParams] = useSearchParams()
+  const [view, setView] = useState<View>(searchParams.get('view') === 'categories' ? 'categories' : 'all')
   const [search, setSearch] = useState('')
 
   function handleLogout() {

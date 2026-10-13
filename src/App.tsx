@@ -19,21 +19,21 @@ function BackButtonHandler() {
   const { pathname } = useLocation()
 
   useEffect(() => {
-    // Don't intercept back on auth/login pages or root pages (allow exit)
     if (pathname === '/staff/login' || pathname === '/staff/orders' ||
         pathname === '/login' || pathname === '/signup' ||
         pathname === '/forgot-password' || pathname === '/') return
 
-    // Push a state so there's always something to pop back to
     window.history.pushState({ page: pathname }, '')
 
     function handlePopState() {
       if (pathname === '/' || pathname === '/staff/orders') {
-        // Allow exit — don't push state back
         return
       } else if (pathname.startsWith('/staff/')) {
         window.history.pushState({ page: pathname }, '')
         navigate('/staff/orders', { replace: true })
+      } else if (pathname.startsWith('/category/')) {
+        window.history.pushState({ page: pathname }, '')
+        navigate('/?view=categories', { replace: true })
       } else {
         window.history.pushState({ page: pathname }, '')
         navigate('/', { replace: true })
