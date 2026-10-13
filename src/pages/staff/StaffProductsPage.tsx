@@ -287,6 +287,15 @@ export function StaffProductsPage() {
   }
 
   // ── Main list screen ──────────────────────────────────────
+  const q = search.trim().toLowerCase()
+  const filteredProducts = q
+    ? products.filter(p =>
+        p.name_en.toLowerCase().includes(q) ||
+        p.name_kn.toLowerCase().includes(q) ||
+        p.category.toLowerCase().includes(q)
+      )
+    : products
+
   return (
     <div className="min-h-svh bg-gray-50 pb-6">
       <div className="bg-white border-b border-gray-100 sticky top-0 z-10 px-4 py-3 flex items-center justify-between">
@@ -338,21 +347,13 @@ export function StaffProductsPage() {
       )}
 
       <div className="px-4 pt-4 space-y-3">
-        {tab === 'products' ? (() => {
-          const q = search.trim().toLowerCase()
-          const filtered = q
-            ? products.filter(p =>
-                p.name_en.toLowerCase().includes(q) ||
-                p.name_kn.toLowerCase().includes(q) ||
-                p.category.toLowerCase().includes(q)
-              )
-            : products
-          return loadingProducts ? (
+        {tab === 'products' ? (
+          loadingProducts ? (
             <div className="text-center text-gray-400 py-16 text-sm">Loading…</div>
-          ) : filtered.length === 0 ? (
+          ) : filteredProducts.length === 0 ? (
             <div className="text-center text-gray-400 py-16 text-sm">{products.length === 0 ? 'No products yet' : 'No results'}</div>
           ) : (
-            filtered.map(p => (
+            filteredProducts.map(p => (
               <div key={p.id} className="bg-white rounded-xl border border-gray-100 shadow-sm p-3 flex gap-3 items-center">
                 <div className="w-12 h-12 flex-shrink-0 rounded-lg overflow-hidden bg-gray-100">
                   {p.image_url ? (
@@ -373,7 +374,7 @@ export function StaffProductsPage() {
               </div>
             ))
           )
-        })() ) : (
+        ) : (
           categories.length === 0 ? (
             <div className="text-center text-gray-400 py-16 text-sm">No categories yet</div>
           ) : (
