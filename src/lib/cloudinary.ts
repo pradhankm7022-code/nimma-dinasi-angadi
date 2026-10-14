@@ -38,7 +38,5 @@ export async function uploadToCloudinary(file: File): Promise<string> {
   })
   const data = await res.json()
   if (!data.secure_url) throw new Error(data.error?.message || 'Upload failed')
-  // Insert auto-enhance transformations into the delivery URL
-  const url = data.secure_url as string
-  return url.replace('/upload/', '/upload/e_auto_brightness,e_vibrance:30,e_sharpen:50/')
+  return data.secure_url as string
 }
