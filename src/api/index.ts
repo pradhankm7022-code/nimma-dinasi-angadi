@@ -2,14 +2,39 @@ import type { CartItem, Product, StoreSettings } from '../types'
 
 const BASE_URL = import.meta.env.VITE_API_URL as string
 
-async function call<T>(params: Record<string, unknown>): Promise<T> {
+async function callOnce<T>(params: Record<string, unknown>): Promise<T> {
   const url = new URL(BASE_URL)
   url.searchParams.set('action', params.action as string)
   url.searchParams.set('payload', JSON.stringify(params))
   const res = await fetch(url.toString())
-  const data = await res.json()
-  if (!data.ok) throw new Error(data.error || 'Request failed')
+  const text = await res.text()
+  let data: Record<string, unknown>
+  try {
+    data = JSON.parse(text)
+  } catch {
+    throw new Error('html')
+  }
+  if (!data.ok) throw new Error(data.error as string || 'Request failed')
   return data as T
+}
+
+async function call<T>(params: Record<string, unknown>): Promise<T> {
+  try {
+    return await callOnce<T>(params)
+  } catch (err) {
+    if (err instanceof Error && err.message === 'html') {
+      // Google Apps Script returned HTML (timeout/cold start) — retry once
+      try {
+        return await callOnce<T>(params)
+      } catch (err2) {
+        if (err2 instanceof Error && err2.message === 'html') {
+          throw new Error('Server error — please try again')
+        }
+        throw err2
+      }
+    }
+    throw err
+  }
 }
 
 // Auth
