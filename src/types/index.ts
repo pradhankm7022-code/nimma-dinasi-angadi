@@ -20,6 +20,7 @@ export interface Product {
 export interface Category {
   id: string
   name: string
+  name_kn: string
   image_url: string
 }
 

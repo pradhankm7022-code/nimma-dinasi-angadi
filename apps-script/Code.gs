@@ -91,7 +91,7 @@ function getBootstrap() {
   settingRows.forEach(function(r) { map[r.key] = r.value; });
 
   var categories = sheetData('Categories').map(function(r) {
-    return { id: r.id, name: r.name, image_url: r.image_url };
+    return { id: r.id, name: r.name, name_kn: r.name_kn || r.name, image_url: r.image_url };
   });
 
   var catMap = {};

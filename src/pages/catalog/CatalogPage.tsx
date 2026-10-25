@@ -4,6 +4,7 @@ import { ProductCard } from '../../components/catalog/ProductCard'
 import { BottomNav } from '../../components/ui/BottomNav'
 import { KaButton } from '../../components/ui/KaButton'
 import { useAuth } from '../../contexts/AuthContext'
+import { useLang } from '../../contexts/LangContext'
 import { useStore } from '../../contexts/StoreContext'
 
 type View = 'categories' | 'all'
@@ -11,6 +12,7 @@ type View = 'categories' | 'all'
 export function CatalogPage() {
   const { storeName, categories, products, loadingStore } = useStore()
   const { logout } = useAuth()
+  const { lang } = useLang()
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
   const [view, setView] = useState<View>(searchParams.get('view') === 'categories' ? 'categories' : 'all')
@@ -120,7 +122,7 @@ export function CatalogPage() {
                   )}
                 </div>
                 <div className="p-3">
-                  <p className="text-sm font-semibold text-gray-800 text-center">{cat.name}</p>
+                  <p className="text-sm font-semibold text-gray-800 text-center">{lang === 'kn' ? cat.name_kn : cat.name}</p>
                 </div>
               </Link>
             ))}

@@ -3,14 +3,17 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { ProductCard } from '../../components/catalog/ProductCard'
 import { BottomNav } from '../../components/ui/BottomNav'
 import { KaButton } from '../../components/ui/KaButton'
+import { useLang } from '../../contexts/LangContext'
 import { useStore } from '../../contexts/StoreContext'
 
 export function CategoryProductsPage() {
   const { id } = useParams<{ id: string }>()
   const { products, categories, loadingStore } = useStore()
+  const { lang } = useLang()
   const navigate = useNavigate()
 
-  const categoryName = categories.find(c => c.id === id)?.name ?? ''
+  const category = categories.find(c => c.id === id)
+  const categoryName = category ? (lang === 'kn' ? category.name_kn : category.name) : ''
 
   const categoryProducts = useMemo(() => {
     return products

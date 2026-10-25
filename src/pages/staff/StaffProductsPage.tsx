@@ -134,7 +134,7 @@ export function StaffProductsPage() {
 
   // ── Category actions ─────────────────────────────────────
   function openNewCat() {
-    setEditingCat({ id: '', name: '', image_url: '' })
+    setEditingCat({ id: '', name: '', name_kn: '', image_url: '' })
     setIsNewCat(true)
     setEditingCatId('')
     setCatError('')
