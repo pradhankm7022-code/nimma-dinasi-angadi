@@ -131,7 +131,7 @@ function getSettings() {
 
   var catRows = sheetData('Categories');
   var categories = catRows.map(function(r) {
-    return { id: r.id, name: r.name, image_url: r.image_url };
+    return { id: r.id, name: r.name, name_kn: r.name_kn || r.name, image_url: r.image_url };
   });
 
   return ok({
