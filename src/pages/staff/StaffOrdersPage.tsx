@@ -41,14 +41,17 @@ export function StaffOrdersPage() {
   }, [])
 
   function startBagging(order: Order) {
+    const photoCount = order.photo_urls?.length ?? 0
     setBagging(prev => ({
       ...prev,
-      [order.id]: order.items.map(() => 'pending'),
+      [order.id]: [...order.items.map(() => 'pending'), ...Array(photoCount).fill('pending')],
     }))
   }
 
   async function setItemState(order: Order, idx: number, state: ItemState) {
-    const current = bagging[order.id] ?? order.items.map(() => 'pending' as ItemState)
+    const photoCount = order.photo_urls?.length ?? 0
+    const totalCount = order.items.length + photoCount
+    const current = bagging[order.id] ?? Array(totalCount).fill('pending' as ItemState)
     const next = current.map((s, i) => i === idx ? state : s)
     setBagging(prev => ({ ...prev, [order.id]: next }))
 
@@ -105,6 +108,8 @@ export function StaffOrdersPage() {
             const isExpanded = expanded === order.id
             const itemStates = bagging[order.id]
             const isBagging = !!itemStates
+            const photoCount = order.photo_urls?.length ?? 0
+            const totalCount = order.items.length + photoCount
             const doneCount = itemStates?.filter(s => s !== 'pending').length ?? 0
 
             return (
@@ -148,22 +153,6 @@ export function StaffOrdersPage() {
                 {/* Expanded */}
                 {isExpanded && (
                   <div className="px-4 pb-4 space-y-3 border-t border-gray-50 pt-3">
-                  {/* Photo items */}
-                  {order.photo_urls && order.photo_urls.length > 0 && (
-                    <div className="space-y-2">
-                      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Photo Items</p>
-                      <div className="flex flex-wrap gap-2">
-                        {order.photo_urls.map((url, i) => (
-                          <a key={i} href={url} target="_blank" rel="noopener noreferrer"
-                            className="w-20 h-20 rounded-lg overflow-hidden border border-gray-200 block"
-                          >
-                            <img src={url} alt={`Photo ${i + 1}`} className="w-full h-full object-cover" />
-                          </a>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
                   <ul className="space-y-2">
                       {order.items.map((item, i) => {
                         const state: ItemState = itemStates?.[i] ?? (
@@ -215,6 +204,56 @@ export function StaffOrdersPage() {
                           </li>
                         )
                       })}
+
+                      {/* Photo item rows */}
+                      {order.photo_urls?.map((url, pi) => {
+                        const idx = order.items.length + pi
+                        const state: ItemState = itemStates?.[idx] ?? 'pending'
+                        return (
+                          <li key={`photo-${pi}`} className={`flex items-center justify-between text-sm rounded-lg px-3 py-2 transition-colors ${
+                            state === 'bagged' ? 'bg-green-50' :
+                            state === 'unavailable' ? 'bg-red-50' : 'bg-gray-50'
+                          }`}>
+                            <div className="flex items-center gap-2 flex-1 min-w-0">
+                              <a href={url} target="_blank" rel="noopener noreferrer" className="flex-shrink-0">
+                                <img src={url} alt={`Photo ${pi + 1}`} className="w-10 h-10 rounded-lg object-cover border border-gray-200" />
+                              </a>
+                              <span className={`truncate ${
+                                state === 'unavailable' ? 'line-through text-red-400' :
+                                state === 'bagged' ? 'text-gray-400' : 'text-gray-700'
+                              }`}>
+                                Photo Item {pi + 1}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-2 flex-shrink-0 ml-2">
+                              {isBagging && state === 'pending' && (
+                                <>
+                                  <button
+                                    onClick={() => setItemState(order, idx, 'bagged')}
+                                    className="bg-green-600 hover:bg-green-700 text-white text-xs font-semibold px-4 py-1.5 rounded-lg transition-colors"
+                                  >
+                                    ✓ Bagged
+                                  </button>
+                                  <button
+                                    onClick={() => setItemState(order, idx, 'unavailable')}
+                                    className="bg-red-100 hover:bg-red-200 text-red-600 text-xs font-medium px-2.5 py-1.5 rounded-lg transition-colors"
+                                  >
+                                    ✕
+                                  </button>
+                                </>
+                              )}
+                              {!isBagging && state === 'unavailable' && (
+                                <span className="text-xs text-red-500 font-semibold">✕ No stock</span>
+                              )}
+                              {!isBagging && state === 'bagged' && (
+                                <svg className="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                                </svg>
+                              )}
+                            </div>
+                          </li>
+                        )
+                      })}
                     </ul>
 
                     {order.status === 'Pending' && !isBagging && (
@@ -228,7 +267,7 @@ export function StaffOrdersPage() {
 
                     {order.status === 'Pending' && isBagging && (
                       <p className="text-xs text-center text-gray-400">
-                        {doneCount} / {order.items.length} items done
+                        {doneCount} / {totalCount} items done
                         {updating === order.id && ' · Saving…'}
                       </p>
                     )}
