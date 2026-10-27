@@ -26,15 +26,15 @@ export function CartPage() {
   const inputRef = useRef<HTMLInputElement>(null)
 
   async function handleCameraCapture(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0]
-    if (!file) return
+    const files = Array.from(e.target.files ?? [])
+    if (!files.length) return
     e.target.value = ''
     setUploading(true)
     setError('')
     try {
-      const url = await uploadToCloudinary(file)
+      const urls = await Promise.all(files.map(f => uploadToCloudinary(f)))
       setPhotoUrls(prev => {
-        const next = [...prev, url]
+        const next = [...prev, ...urls]
         writePhotos(next)
         return next
       })
@@ -85,6 +85,7 @@ export function CartPage() {
           ref={inputRef}
           type="file"
           accept="image/*"
+          multiple
           className="hidden"
           onChange={handleCameraCapture}
         />
