@@ -21,6 +21,10 @@ function writeProductsCache(products: Product[]) {
   try { localStorage.setItem(STAFF_PRODUCTS_CACHE, JSON.stringify(products)) } catch {}
 }
 
+function getStaffToken(): string {
+  return sessionStorage.getItem('nda_staff_token') ?? ''
+}
+
 const EMPTY_PRODUCT: Omit<Product, 'id'> = {
   name_en: '', name_kn: '', category_id: '', category: '', image_url: '', in_stock: true, variants: [], search_keys: '', order_count: 0,
 }
@@ -76,14 +80,14 @@ export function StaffProductsPage() {
     setProductError('')
     try {
       if (isNewProduct) {
-        const res = await createProduct(editingProduct)
+        const res = await createProduct(editingProduct, getStaffToken())
         setProducts(prev => {
           const next = [...prev, { ...editingProduct, id: res.id }]
           writeProductsCache(next)
           return next
         })
       } else {
-        await updateProduct(editingProduct)
+        await updateProduct(editingProduct, getStaffToken())
         setProducts(prev => {
           const next = prev.map(p => p.id === editingProduct.id ? editingProduct : p)
           writeProductsCache(next)
@@ -100,7 +104,7 @@ export function StaffProductsPage() {
 
   async function handleDeleteProduct(id: string) {
     if (!confirm('Delete this product?')) return
-    await deleteProduct(id)
+    await deleteProduct(id, getStaffToken())
     setProducts(prev => {
       const next = prev.filter(p => p.id !== id)
       writeProductsCache(next)
@@ -156,10 +160,10 @@ export function StaffProductsPage() {
     setCatError('')
     try {
       if (isNewCat) {
-        const res = await createCategory(editingCat.name, editingCat.image_url)
+        const res = await createCategory(editingCat.name, editingCat.image_url, getStaffToken())
         setCategories([...categories, { ...editingCat, id: res.id }])
       } else {
-        await updateCategory(editingCatId, editingCat.name, editingCat.image_url)
+        await updateCategory(editingCatId, editingCat.name, editingCat.image_url, getStaffToken())
         setCategories(categories.map(c => c.id === editingCatId ? { ...editingCat, id: editingCatId } : c))
       }
       setEditingCat(null)
@@ -172,7 +176,7 @@ export function StaffProductsPage() {
 
   async function handleDeleteCat(cat: Category) {
     if (!confirm(`Delete category "${cat.name}"?`)) return
-    await deleteCategory(cat.id)
+    await deleteCategory(cat.id, getStaffToken())
     setCategories(categories.filter(c => c.id !== cat.id))
   }
 

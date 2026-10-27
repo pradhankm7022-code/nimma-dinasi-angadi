@@ -29,12 +29,15 @@ export function StaffOrdersPage() {
 
   function handleLogout() {
     sessionStorage.removeItem('nda_staff')
+    sessionStorage.removeItem('nda_staff_token')
+    sessionStorage.removeItem('nda_is_staff')
     localStorage.removeItem('nda_is_staff')
     navigate('/staff/login', { replace: true })
   }
 
   useEffect(() => {
-    getAllOrders()
+    const staffToken = sessionStorage.getItem('nda_staff_token') ?? ''
+    getAllOrders(staffToken)
       .then(res => setOrders(res.orders as Order[]))
       .catch(console.error)
       .finally(() => setLoading(false))
@@ -64,7 +67,8 @@ export function StaffOrdersPage() {
         available: next[i] === 'bagged',
       }))
       try {
-        await finishBagging(order.id, updatedItems)
+        const staffToken = sessionStorage.getItem('nda_staff_token') ?? ''
+        await finishBagging(order.id, updatedItems, staffToken)
         setOrders(prev => prev.map(o =>
           o.id === order.id ? { ...o, status: 'Ready', items: updatedItems } : o
         ))
@@ -76,8 +80,9 @@ export function StaffOrdersPage() {
 
   async function changeStatus(orderId: string, status: Order['status']) {
     setUpdating(orderId)
+    const staffToken = sessionStorage.getItem('nda_staff_token') ?? ''
     try {
-      await updateOrderStatus(orderId, status)
+      await updateOrderStatus(orderId, status, staffToken)
       setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status } : o))
     } catch (e) { console.error(e) }
     setUpdating(null)

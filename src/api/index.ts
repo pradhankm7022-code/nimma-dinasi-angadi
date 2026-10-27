@@ -39,10 +39,10 @@ async function call<T>(params: Record<string, unknown>): Promise<T> {
 
 // Auth
 export const signUp = (name: string, email: string, password: string, phone: string) =>
-  call<{ ok: true; user: { id: string; name: string; email: string; phone: string } }>({ action: 'signUp', name, email, password, phone })
+  call<{ ok: true; user: { id: string; name: string; email: string; phone: string }; token: string }>({ action: 'signUp', name, email, password, phone })
 
 export const signIn = (email: string, password: string) =>
-  call<{ ok: true; user: { id: string; name: string; email: string; phone: string } }>({ action: 'signIn', email, password })
+  call<{ ok: true; user: { id: string; name: string; email: string; phone: string }; token: string }>({ action: 'signIn', email, password })
 
 export const forgotPassword = (email: string) =>
   call<{ ok: true }>({ action: 'forgotPassword', email })
@@ -58,37 +58,37 @@ export const getProducts = () =>
   call<{ ok: true; products: Product[] }>({ action: 'getProducts' })
 
 // Orders
-export const placeOrder = (customerId: string, items: CartItem[], photoUrls?: string[]) =>
-  call<{ ok: true; order_number: string }>({ action: 'placeOrder', customerId, items, photoUrls: photoUrls ?? [] })
+export const placeOrder = (customerId: string, token: string, items: CartItem[], photoUrls?: string[]) =>
+  call<{ ok: true; order_number: string }>({ action: 'placeOrder', customerId, token, items, photoUrls: photoUrls ?? [] })
 
-export const getMyOrders = (customerId: string) =>
-  call<{ ok: true; orders: unknown[] }>({ action: 'getMyOrders', customerId })
+export const getMyOrders = (customerId: string, token: string) =>
+  call<{ ok: true; orders: unknown[] }>({ action: 'getMyOrders', customerId, token })
 
-export const getAllOrders = () =>
-  call<{ ok: true; orders: unknown[] }>({ action: 'getAllOrders' })
+export const getAllOrders = (staffToken: string) =>
+  call<{ ok: true; orders: unknown[] }>({ action: 'getAllOrders', staffToken })
 
-export const updateOrderStatus = (orderId: string, status: string) =>
-  call<{ ok: true }>({ action: 'updateOrderStatus', orderId, status })
+export const updateOrderStatus = (orderId: string, status: string, staffToken: string) =>
+  call<{ ok: true }>({ action: 'updateOrderStatus', orderId, status, staffToken })
 
-export const finishBagging = (orderId: string, items: CartItem[]) =>
-  call<{ ok: true }>({ action: 'finishBagging', orderId, items })
+export const finishBagging = (orderId: string, items: CartItem[], staffToken: string) =>
+  call<{ ok: true }>({ action: 'finishBagging', orderId, items, staffToken })
 
 // Staff auth
 export const staffLogin = (pin: string) =>
-  call<{ ok: true }>({ action: 'staffLogin', pin })
+  call<{ ok: true; staffToken: string }>({ action: 'staffLogin', pin })
 
 // Category CRUD (staff)
-export const createCategory = (name: string, image_url: string) =>
-  call<{ ok: true; id: string }>({ action: 'createCategory', name, image_url })
+export const createCategory = (name: string, image_url: string, staffToken: string) =>
+  call<{ ok: true; id: string }>({ action: 'createCategory', name, image_url, staffToken })
 
-export const updateCategory = (id: string, name: string, image_url: string) =>
-  call<{ ok: true }>({ action: 'updateCategory', id, name, image_url })
+export const updateCategory = (id: string, name: string, image_url: string, staffToken: string) =>
+  call<{ ok: true }>({ action: 'updateCategory', id, name, image_url, staffToken })
 
-export const deleteCategory = (id: string) =>
-  call<{ ok: true }>({ action: 'deleteCategory', id })
+export const deleteCategory = (id: string, staffToken: string) =>
+  call<{ ok: true }>({ action: 'deleteCategory', id, staffToken })
 
 // Product CRUD (staff)
-export const createProduct = (product: Omit<Product, 'id' | 'category'>) =>
+export const createProduct = (product: Omit<Product, 'id' | 'category'>, staffToken: string) =>
   call<{ ok: true; id: string }>({
     action: 'createProduct',
     name_en: product.name_en,
@@ -98,9 +98,10 @@ export const createProduct = (product: Omit<Product, 'id' | 'category'>) =>
     in_stock: product.in_stock,
     variants: product.variants,
     search_keys: product.search_keys,
+    staffToken,
   })
 
-export const updateProduct = (product: Product) =>
+export const updateProduct = (product: Product, staffToken: string) =>
   call<{ ok: true }>({
     action: 'updateProduct',
     id: product.id,
@@ -111,10 +112,11 @@ export const updateProduct = (product: Product) =>
     in_stock: product.in_stock,
     variants: product.variants,
     search_keys: product.search_keys,
+    staffToken,
   })
 
-export const deleteProduct = (id: string) =>
-  call<{ ok: true }>({ action: 'deleteProduct', id })
+export const deleteProduct = (id: string, staffToken: string) =>
+  call<{ ok: true }>({ action: 'deleteProduct', id, staffToken })
 
 // Push notifications (staff)
 export const savePushSubscription = (sub: PushSubscriptionJSON) =>

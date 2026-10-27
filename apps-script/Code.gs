@@ -45,6 +45,65 @@ function hashPassword(pw) {
 }
 
 // ============================================================
+//  Staff token — stored in Script Properties, rotates on login
+// ============================================================
+function generateStaffToken() {
+  var token = uuid() + '-' + uuid();
+  PropertiesService.getScriptProperties().setProperty('STAFF_TOKEN', token);
+  return token;
+}
+
+function verifyStaffToken(token) {
+  if (!token) return false;
+  var stored = PropertiesService.getScriptProperties().getProperty('STAFF_TOKEN');
+  return stored && stored === token;
+}
+
+// ============================================================
+//  Customer session tokens — stored in Script Properties
+// ============================================================
+function generateUserToken(userId) {
+  var token = uuid();
+  var key = 'USER_TOKEN_' + userId;
+  PropertiesService.getScriptProperties().setProperty(key, token);
+  return token;
+}
+
+function verifyUserToken(userId, token) {
+  if (!userId || !token) return false;
+  var key = 'USER_TOKEN_' + userId;
+  var stored = PropertiesService.getScriptProperties().getProperty(key);
+  return stored && stored === token;
+}
+
+// ============================================================
+//  Rate limiting — max 5 attempts per key, 5 min lockout
+// ============================================================
+function checkRateLimit(key) {
+  var props = PropertiesService.getScriptProperties();
+  var data = JSON.parse(props.getProperty('RL_' + key) || '{"count":0,"until":0}');
+  var now = Date.now();
+  if (data.until > now) return false; // locked out
+  if (data.count >= 5) {
+    // Lock out for 5 minutes
+    props.setProperty('RL_' + key, JSON.stringify({ count: 0, until: now + 5 * 60 * 1000 }));
+    return false;
+  }
+  return true;
+}
+
+function recordFailedAttempt(key) {
+  var props = PropertiesService.getScriptProperties();
+  var data = JSON.parse(props.getProperty('RL_' + key) || '{"count":0,"until":0}');
+  data.count = (data.count || 0) + 1;
+  props.setProperty('RL_' + key, JSON.stringify(data));
+}
+
+function clearRateLimit(key) {
+  PropertiesService.getScriptProperties().deleteProperty('RL_' + key);
+}
+
+// ============================================================
 //  Single GET handler — all actions to avoid CORS preflight
 //  Complex params are JSON-encoded as query string values
 // ============================================================
@@ -61,22 +120,22 @@ function doGet(e) {
     if (action === 'getBootstrap')         return getBootstrap();
     if (action === 'getSettings')         return getSettings();
     if (action === 'getProducts')         return getProducts();
-    if (action === 'getMyOrders')         return getMyOrders(p.customerId);
-    if (action === 'getAllOrders')         return getAllOrders();
+    if (action === 'getMyOrders')         return getMyOrders(p.customerId, p.token);
+    if (action === 'getAllOrders')         return getAllOrders(p.staffToken);
     if (action === 'signUp')              return signUp({ name: p.name, email: p.email, password: p.password, phone: p.phone });
     if (action === 'signIn')              return signIn({ email: p.email, password: p.password });
     if (action === 'forgotPassword')      return forgotPassword({ email: p.email });
     if (action === 'verifyOTP')           return verifyOTP({ email: p.email, otp: p.otp, newPassword: p.newPassword });
-    if (action === 'placeOrder')          return placeOrder({ customerId: p.customerId, items: p.items, photoUrls: p.photoUrls });
-    if (action === 'updateOrderStatus')   return updateOrderStatus({ orderId: p.orderId, status: p.status });
-    if (action === 'finishBagging')       return finishBagging({ orderId: p.orderId, items: p.items });
+    if (action === 'placeOrder')          return placeOrder({ customerId: p.customerId, token: p.token, items: p.items, photoUrls: p.photoUrls });
+    if (action === 'updateOrderStatus')   return updateOrderStatus({ orderId: p.orderId, status: p.status, staffToken: p.staffToken });
+    if (action === 'finishBagging')       return finishBagging({ orderId: p.orderId, items: p.items, staffToken: p.staffToken });
     if (action === 'staffLogin')          return staffLogin({ pin: p.pin });
-    if (action === 'createProduct')       return createProduct({ name_en: p.name_en, name_kn: p.name_kn, category_id: p.category_id, image_url: p.image_url, in_stock: p.in_stock, variants: p.variants, search_keys: p.search_keys });
-    if (action === 'updateProduct')       return updateProduct({ id: p.id, name_en: p.name_en, name_kn: p.name_kn, category_id: p.category_id, image_url: p.image_url, in_stock: p.in_stock, variants: p.variants, search_keys: p.search_keys });
-    if (action === 'deleteProduct')       return deleteProduct({ id: p.id });
-    if (action === 'createCategory')      return createCategory({ name: p.name, image_url: p.image_url });
-    if (action === 'updateCategory')      return updateCategory({ id: p.id, name: p.name, image_url: p.image_url });
-    if (action === 'deleteCategory')      return deleteCategory({ id: p.id });
+    if (action === 'createProduct')       return createProduct({ name_en: p.name_en, name_kn: p.name_kn, category_id: p.category_id, image_url: p.image_url, in_stock: p.in_stock, variants: p.variants, search_keys: p.search_keys, staffToken: p.staffToken });
+    if (action === 'updateProduct')       return updateProduct({ id: p.id, name_en: p.name_en, name_kn: p.name_kn, category_id: p.category_id, image_url: p.image_url, in_stock: p.in_stock, variants: p.variants, search_keys: p.search_keys, staffToken: p.staffToken });
+    if (action === 'deleteProduct')       return deleteProduct({ id: p.id, staffToken: p.staffToken });
+    if (action === 'createCategory')      return createCategory({ name: p.name, image_url: p.image_url, staffToken: p.staffToken });
+    if (action === 'updateCategory')      return updateCategory({ id: p.id, name: p.name, image_url: p.image_url, staffToken: p.staffToken });
+    if (action === 'deleteCategory')      return deleteCategory({ id: p.id, staffToken: p.staffToken });
     if (action === 'savePushSubscription') return savePushSubscription({ subscription: p.subscription });
     return err('Unknown action: ' + action);
   } catch (ex) {
@@ -118,7 +177,6 @@ function getBootstrap() {
   return ok({
     store_name: map['store_name'] || 'Nimma Dinasi Angadi',
     store_logo_url: map['store_logo_url'] || '',
-    staff_pin: map['staff_pin'] || '0000',
     categories: categories,
     products: products,
   });
@@ -138,7 +196,6 @@ function getSettings() {
     store_name: map['store_name'] || 'Nimma Dinasi Angadi',
     store_logo_url: map['store_logo_url'] || '',
     categories: categories,
-    staff_pin: map['staff_pin'] || '0000',
   });
 }
 
@@ -173,13 +230,15 @@ function getProducts() {
 }
 
 function createCategory(body) {
+  if (!verifyStaffToken(body.staffToken)) return err('Unauthorized');
   var s = sheet('Categories');
   var id = uuid();
-  s.appendRow([id, body.name, body.image_url || '']);
+  s.appendRow([id, body.name, body.name_kn || '', body.image_url || '']);
   return ok({ id: id });
 }
 
 function updateCategory(body) {
+  if (!verifyStaffToken(body.staffToken)) return err('Unauthorized');
   var s = sheet('Categories');
   var data = s.getDataRange().getValues();
   for (var i = 1; i < data.length; i++) {
@@ -192,6 +251,7 @@ function updateCategory(body) {
 }
 
 function deleteCategory(body) {
+  if (!verifyStaffToken(body.staffToken)) return err('Unauthorized');
   var s = sheet('Categories');
   var data = s.getDataRange().getValues();
   for (var i = 1; i < data.length; i++) {
@@ -204,6 +264,7 @@ function deleteCategory(body) {
 }
 
 function createProduct(body) {
+  if (!verifyStaffToken(body.staffToken)) return err('Unauthorized');
   var s = sheet('Products');
   var id = uuid();
   s.appendRow([
@@ -217,6 +278,7 @@ function createProduct(body) {
 }
 
 function updateProduct(body) {
+  if (!verifyStaffToken(body.staffToken)) return err('Unauthorized');
   var s = sheet('Products');
   var data = s.getDataRange().getValues();
   for (var i = 1; i < data.length; i++) {
@@ -236,6 +298,7 @@ function updateProduct(body) {
 }
 
 function deleteProduct(body) {
+  if (!verifyStaffToken(body.staffToken)) return err('Unauthorized');
   var s = sheet('Products');
   var data = s.getDataRange().getValues();
   for (var i = 1; i < data.length; i++) {
@@ -260,16 +323,25 @@ function signUp(body) {
     id, body.name, body.email, hashPassword(body.password),
     body.phone, new Date().toISOString(), '', '',
   ]);
-  return ok({ user: { id: id, name: body.name, email: body.email, phone: body.phone } });
+  var token = generateUserToken(id);
+  return ok({ user: { id: id, name: body.name, email: body.email, phone: body.phone }, token: token });
 }
 
 function signIn(body) {
+  var rlKey = 'signin_' + (body.email || '').replace(/[^a-z0-9]/gi, '_');
+  if (!checkRateLimit(rlKey)) return err('Too many attempts. Try again in 5 minutes.');
+
   var users = sheetData('Users');
   var user = users.find(function(u) {
     return u.email === body.email && u.password_hash === hashPassword(body.password);
   });
-  if (!user) return err('Invalid email or password');
-  return ok({ user: { id: user.id, name: user.name, email: user.email, phone: user.phone } });
+  if (!user) {
+    recordFailedAttempt(rlKey);
+    return err('Invalid email or password');
+  }
+  clearRateLimit(rlKey);
+  var token = generateUserToken(user.id);
+  return ok({ user: { id: user.id, name: user.name, email: user.email, phone: user.phone }, token: token });
 }
 
 function forgotPassword(body) {
@@ -280,7 +352,6 @@ function forgotPassword(body) {
   var otp = Math.floor(100000 + Math.random() * 900000).toString();
   var expiry = new Date(Date.now() + 10 * 60 * 1000).toISOString(); // 10 min
 
-  // Update OTP columns (7 = otp, 8 = otp_expiry, 1-indexed)
   var s = sheet('Users');
   var data = s.getDataRange().getValues();
   for (var i = 1; i < data.length; i++) {
@@ -304,7 +375,6 @@ function verifyOTP(body) {
       var expiry = new Date(data[i][7]);
       if (storedOTP !== body.otp) return err('Invalid OTP');
       if (new Date() > expiry) return err('OTP expired');
-      // Update password and clear OTP
       s.getRange(i + 1, 4, 1, 3).setValues([[hashPassword(body.newPassword), '', '']]);
       return ok();
     }
@@ -316,21 +386,30 @@ function verifyOTP(body) {
 //  Staff login
 // ============================================================
 function staffLogin(body) {
+  var rlKey = 'staff_pin';
+  if (!checkRateLimit(rlKey)) return err('Too many attempts. Try again in 5 minutes.');
+
   var rows = sheetData('Settings');
   var map = {};
   rows.forEach(function(r) { map[r.key] = r.value; });
-  if (String(body.pin) !== String(map['staff_pin'])) return err('Invalid PIN');
-  return ok();
+  if (String(body.pin) !== String(map['staff_pin'])) {
+    recordFailedAttempt(rlKey);
+    return err('Invalid PIN');
+  }
+  clearRateLimit(rlKey);
+  var token = generateStaffToken();
+  return ok({ staffToken: token });
 }
 
 // ============================================================
 //  Orders
 // ============================================================
 function placeOrder(body) {
+  if (!verifyUserToken(body.customerId, body.token)) return err('Unauthorized');
+
   var s = sheet('Orders');
   var id = uuid();
 
-  // Generate order number NDA-YYYY-NNNN
   var existing = s.getLastRow() - 1;
   var year = new Date().getFullYear();
   var seq = String(existing + 1).padStart(4, '0');
@@ -341,13 +420,13 @@ function placeOrder(body) {
     JSON.stringify(body.items), 'Pending', new Date().toISOString(),
     JSON.stringify(body.photoUrls || []),
   ]);
-  // Increment order_count for each ordered product
   incrementOrderCounts(body.items);
   try { notifyStaff(orderNumber); } catch(e) { Logger.log('notifyStaff error: ' + e); }
   return ok({ order_number: orderNumber });
 }
 
-function getMyOrders(customerId) {
+function getMyOrders(customerId, token) {
+  if (!verifyUserToken(customerId, token)) return err('Unauthorized');
   var rows = sheetData('Orders');
   var orders = rows
     .filter(function(r) { return r.customer_id === customerId; })
@@ -356,7 +435,8 @@ function getMyOrders(customerId) {
   return ok({ orders: orders });
 }
 
-function getAllOrders() {
+function getAllOrders(staffToken) {
+  if (!verifyStaffToken(staffToken)) return err('Unauthorized');
   var rows = sheetData('Orders');
   var users = sheetData('Users');
   var userMap = {};
@@ -388,6 +468,7 @@ function parseOrder(r) {
 }
 
 function updateOrderStatus(body) {
+  if (!verifyStaffToken(body.staffToken)) return err('Unauthorized');
   var s = sheet('Orders');
   var data = s.getDataRange().getValues();
   for (var i = 1; i < data.length; i++) {
@@ -400,6 +481,7 @@ function updateOrderStatus(body) {
 }
 
 function finishBagging(body) {
+  if (!verifyStaffToken(body.staffToken)) return err('Unauthorized');
   var s = sheet('Orders');
   var data = s.getDataRange().getValues();
   for (var i = 1; i < data.length; i++) {
@@ -420,7 +502,6 @@ function savePushSubscription(body) {
   if (!sub || !sub.endpoint) return err('Invalid subscription');
   var s = sheet('Subscriptions');
   var data = s.getDataRange().getValues();
-  // Upsert by endpoint
   for (var i = 1; i < data.length; i++) {
     if (data[i][0] === sub.endpoint) {
       s.getRange(i + 1, 1, 1, 4).setValues([[
@@ -472,10 +553,9 @@ function incrementOrderCounts(items) {
       if (data[i][idCol] === item.product_id) {
         var current = Number(data[i][countCol]) || 0;
         s.getRange(i + 1, countCol + 1).setValue(current + 1);
-        data[i][countCol] = current + 1; // update local cache to avoid double-increment
+        data[i][countCol] = current + 1;
         break;
       }
     }
   });
 }
-

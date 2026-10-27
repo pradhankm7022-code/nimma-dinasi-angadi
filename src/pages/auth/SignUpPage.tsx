@@ -22,7 +22,7 @@ export function SignUpPage() {
     setLoading(true)
     try {
       const res = await signUp(form.name, form.email, form.password, form.phone)
-      login(res.user)
+      login(res.user, res.token)
       navigate('/', { replace: true })
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Sign up failed')

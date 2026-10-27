@@ -17,7 +17,7 @@ function writePhotos(urls: string[]) {
 
 export function CartPage() {
   const { cart, updateCartQty, clearCart } = useStore()
-  const { user } = useAuth()
+  const { user, sessionToken } = useAuth()
   const navigate = useNavigate()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -54,7 +54,7 @@ export function CartPage() {
   }
 
   async function handlePlaceOrder() {
-    if (!user) return
+    if (!user || !sessionToken) return
     if (cart.length === 0 && photoUrls.length === 0) {
       setError('Add items or photos to place an order.')
       return
@@ -62,7 +62,7 @@ export function CartPage() {
     setLoading(true)
     setError('')
     try {
-      const res = await placeOrder(user.id, cart, photoUrls)
+      const res = await placeOrder(user.id, sessionToken, cart, photoUrls)
       clearCart()
       setPhotoUrls([])
       writePhotos([])

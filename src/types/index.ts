@@ -28,7 +28,6 @@ export interface StoreSettings {
   store_name: string
   store_logo_url: string
   categories: Category[]
-  staff_pin: string
 }
 
 export interface CartItem {

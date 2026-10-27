@@ -29,7 +29,7 @@ export function LoginPage() {
     setLoading(true)
     try {
       const res = await signIn(email, password)
-      login(res.user)
+      login(res.user, res.token)
       navigate('/', { replace: true })
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Login failed')

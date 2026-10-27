@@ -13,7 +13,7 @@ const STATUS_COLORS: Record<string, string> = {
 }
 
 export function OrdersPage() {
-  const { user } = useAuth()
+  const { user, sessionToken } = useAuth()
   const { addToCart } = useStore()
   const location = useLocation()
   const navigate = useNavigate()
@@ -25,12 +25,12 @@ export function OrdersPage() {
   const [reordered, setReordered] = useState<string | null>(null)
 
   useEffect(() => {
-    if (!user) return
-    getMyOrders(user.id)
+    if (!user || !sessionToken) return
+    getMyOrders(user.id, sessionToken)
       .then(res => setOrders(res.orders as Order[]))
       .catch(err => setError(err.message))
       .finally(() => setLoading(false))
-  }, [user])
+  }, [user, sessionToken])
 
   function handleReorder(order: Order) {
     order.items.forEach(item => {
