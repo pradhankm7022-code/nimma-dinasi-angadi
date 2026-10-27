@@ -76,17 +76,30 @@ export function OrdersPage() {
 
                 {/* Expanded items */}
                 {isExpanded && (
-                  <ul className="px-4 pb-4 space-y-1 border-t border-gray-50 pt-3">
-                    {order.items.map((item, i) => (
-                      <li key={i} className="flex justify-between text-xs">
-                        <span className={item.available === false ? 'line-through text-gray-400' : 'text-gray-600'}>
-                          {item.product_name_en} <span className="text-gray-400">({item.variant_label})</span>
-                          {item.available === false && <span className="ml-1 text-red-400 no-underline">· Not available</span>}
-                        </span>
-                        <span className={`font-medium ${item.available === false ? 'text-gray-300' : 'text-gray-600'}`}>x{item.qty}</span>
-                      </li>
-                    ))}
-                  </ul>
+                  <div className="px-4 pb-4 border-t border-gray-50 pt-3 space-y-3">
+                    <ul className="space-y-1">
+                      {order.items.map((item, i) => (
+                        <li key={i} className="flex justify-between text-xs">
+                          <span className={item.available === false ? 'line-through text-gray-400' : 'text-gray-600'}>
+                            {item.product_name_en} <span className="text-gray-400">({item.variant_label})</span>
+                            {item.available === false && <span className="ml-1 text-red-400 no-underline">· Not available</span>}
+                          </span>
+                          <span className={`font-medium ${item.available === false ? 'text-gray-300' : 'text-gray-600'}`}>x{item.qty}</span>
+                        </li>
+                      ))}
+                    </ul>
+                    {order.photo_urls && order.photo_urls.length > 0 && (
+                      <div className="flex flex-wrap gap-2 pt-1">
+                        {order.photo_urls.map((url, i) => (
+                          <a key={i} href={url} target="_blank" rel="noopener noreferrer"
+                            className="w-20 h-20 rounded-lg overflow-hidden border border-gray-200 block"
+                          >
+                            <img src={url} alt={`Photo ${i + 1}`} className="w-full h-full object-cover" />
+                          </a>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 )}
               </div>
             )
