@@ -67,7 +67,7 @@ function doGet(e) {
     if (action === 'signIn')              return signIn({ email: p.email, password: p.password });
     if (action === 'forgotPassword')      return forgotPassword({ email: p.email });
     if (action === 'verifyOTP')           return verifyOTP({ email: p.email, otp: p.otp, newPassword: p.newPassword });
-    if (action === 'placeOrder')          return placeOrder({ customerId: p.customerId, items: p.items });
+    if (action === 'placeOrder')          return placeOrder({ customerId: p.customerId, items: p.items, photoUrls: p.photoUrls });
     if (action === 'updateOrderStatus')   return updateOrderStatus({ orderId: p.orderId, status: p.status });
     if (action === 'finishBagging')       return finishBagging({ orderId: p.orderId, items: p.items });
     if (action === 'staffLogin')          return staffLogin({ pin: p.pin });
