@@ -42,6 +42,7 @@ export function StaffLoginPage() {
       sessionStorage.setItem('nda_staff', 'true')
       sessionStorage.setItem('nda_staff_token', res.staffToken)
       sessionStorage.setItem('nda_is_staff', 'true')
+      localStorage.setItem('nda_is_staff', 'true')
       subscribePush() // fire-and-forget — don't block navigation
       navigate('/staff/orders', { replace: true })
     } catch (err: unknown) {

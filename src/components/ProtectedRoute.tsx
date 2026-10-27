@@ -6,7 +6,7 @@ export function RequireAuth() {
   if (loading) return null
   if (user) return <Outlet />
   // Staff device should go to staff PIN, not customer login
-  if (sessionStorage.getItem('nda_is_staff') === 'true') return <Navigate to="/staff/login" replace />
+  if (localStorage.getItem('nda_is_staff') === 'true') return <Navigate to="/staff/login" replace />
   return <Navigate to="/login" replace />
 }
 
