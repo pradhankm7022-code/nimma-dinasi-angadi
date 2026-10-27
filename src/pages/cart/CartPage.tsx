@@ -6,13 +6,22 @@ import { useStore } from '../../contexts/StoreContext'
 import { placeOrder } from '../../api'
 import { uploadToCloudinary } from '../../lib/cloudinary'
 
+const PHOTOS_KEY = 'nda_cart_photos'
+
+function readPhotos(): string[] {
+  try { return JSON.parse(localStorage.getItem(PHOTOS_KEY) || '[]') } catch { return [] }
+}
+function writePhotos(urls: string[]) {
+  try { localStorage.setItem(PHOTOS_KEY, JSON.stringify(urls)) } catch {}
+}
+
 export function CartPage() {
   const { cart, updateCartQty, clearCart } = useStore()
   const { user } = useAuth()
   const navigate = useNavigate()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-  const [photoUrls, setPhotoUrls] = useState<string[]>([])
+  const [photoUrls, setPhotoUrls] = useState<string[]>(readPhotos)
   const [uploading, setUploading] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
 
@@ -24,7 +33,11 @@ export function CartPage() {
     setError('')
     try {
       const url = await uploadToCloudinary(file)
-      setPhotoUrls(prev => [...prev, url])
+      setPhotoUrls(prev => {
+        const next = [...prev, url]
+        writePhotos(next)
+        return next
+      })
     } catch {
       setError('Photo upload failed. Try again.')
     } finally {
@@ -33,7 +46,11 @@ export function CartPage() {
   }
 
   function removePhoto(idx: number) {
-    setPhotoUrls(prev => prev.filter((_, i) => i !== idx))
+    setPhotoUrls(prev => {
+      const next = prev.filter((_, i) => i !== idx)
+      writePhotos(next)
+      return next
+    })
   }
 
   async function handlePlaceOrder() {
@@ -48,6 +65,7 @@ export function CartPage() {
       const res = await placeOrder(user.id, cart, photoUrls)
       clearCart()
       setPhotoUrls([])
+      writePhotos([])
       navigate('/orders', { state: { newOrder: res.order_number } })
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Failed to place order')
