@@ -49,6 +49,7 @@ export interface Order {
   customer_name?: string
   customer_phone?: string
   items: CartItem[]
+  photo_urls?: string[]
   status: 'Pending' | 'Ready' | 'Picked Up'
   created_at: string
 }

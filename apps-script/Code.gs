@@ -339,6 +339,7 @@ function placeOrder(body) {
   s.appendRow([
     id, orderNumber, body.customerId,
     JSON.stringify(body.items), 'Pending', new Date().toISOString(),
+    JSON.stringify(body.photoUrls || []),
   ]);
   // Increment order_count for each ordered product
   incrementOrderCounts(body.items);
@@ -373,11 +374,14 @@ function getAllOrders() {
 function parseOrder(r) {
   var items = [];
   try { items = JSON.parse(r.items_json || '[]'); } catch(e) {}
+  var photoUrls = [];
+  try { photoUrls = JSON.parse(r.photo_urls || '[]'); } catch(e) {}
   return {
     id: r.id,
     order_number: r.order_number,
     customer_id: r.customer_id,
     items: items,
+    photo_urls: photoUrls,
     status: r.status,
     created_at: r.created_at,
   };

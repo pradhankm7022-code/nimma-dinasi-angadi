@@ -148,7 +148,23 @@ export function StaffOrdersPage() {
                 {/* Expanded */}
                 {isExpanded && (
                   <div className="px-4 pb-4 space-y-3 border-t border-gray-50 pt-3">
-                    <ul className="space-y-2">
+                  {/* Photo items */}
+                  {order.photo_urls && order.photo_urls.length > 0 && (
+                    <div className="space-y-2">
+                      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Photo Items</p>
+                      <div className="flex flex-wrap gap-2">
+                        {order.photo_urls.map((url, i) => (
+                          <a key={i} href={url} target="_blank" rel="noopener noreferrer"
+                            className="w-20 h-20 rounded-lg overflow-hidden border border-gray-200 block"
+                          >
+                            <img src={url} alt={`Photo ${i + 1}`} className="w-full h-full object-cover" />
+                          </a>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  <ul className="space-y-2">
                       {order.items.map((item, i) => {
                         const state: ItemState = itemStates?.[i] ?? (
                           item.available === false || item.available as unknown === 'false' ? 'unavailable' :

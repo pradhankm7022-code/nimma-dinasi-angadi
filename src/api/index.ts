@@ -58,8 +58,8 @@ export const getProducts = () =>
   call<{ ok: true; products: Product[] }>({ action: 'getProducts' })
 
 // Orders
-export const placeOrder = (customerId: string, items: CartItem[]) =>
-  call<{ ok: true; order_number: string }>({ action: 'placeOrder', customerId, items })
+export const placeOrder = (customerId: string, items: CartItem[], photoUrls?: string[]) =>
+  call<{ ok: true; order_number: string }>({ action: 'placeOrder', customerId, items, photoUrls: photoUrls ?? [] })
 
 export const getMyOrders = (customerId: string) =>
   call<{ ok: true; orders: unknown[] }>({ action: 'getMyOrders', customerId })
