@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
-import { useLocation } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { BottomNav } from '../../components/ui/BottomNav'
 import { useAuth } from '../../contexts/AuthContext'
+import { useStore } from '../../contexts/StoreContext'
 import { getMyOrders } from '../../api'
 import type { Order } from '../../types'
 
@@ -13,12 +14,15 @@ const STATUS_COLORS: Record<string, string> = {
 
 export function OrdersPage() {
   const { user } = useAuth()
+  const { addToCart } = useStore()
   const location = useLocation()
+  const navigate = useNavigate()
   const newOrder = (location.state as { newOrder?: string } | null)?.newOrder
   const [orders, setOrders] = useState<Order[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [expanded, setExpanded] = useState<string | null>(null)
+  const [reordered, setReordered] = useState<string | null>(null)
 
   useEffect(() => {
     if (!user) return
@@ -27,6 +31,22 @@ export function OrdersPage() {
       .catch(err => setError(err.message))
       .finally(() => setLoading(false))
   }, [user])
+
+  function handleReorder(order: Order) {
+    order.items.forEach(item => {
+      addToCart({
+        product_id: item.product_id,
+        product_name_en: item.product_name_en,
+        product_name_kn: item.product_name_kn,
+        product_image_url: item.product_image_url,
+        variant_label: item.variant_label,
+        variant_price: item.variant_price,
+        qty: item.qty,
+      })
+    })
+    setReordered(order.id)
+    setTimeout(() => navigate('/cart'), 800)
+  }
 
   return (
     <div className="min-h-svh bg-gray-50 pb-20">
@@ -50,9 +70,10 @@ export function OrdersPage() {
         ) : (
           orders.map(order => {
             const isExpanded = expanded === order.id
+            const isReordering = reordered === order.id
             return (
               <div key={order.id} className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-                {/* Header row — always visible */}
+                {/* Header row */}
                 <button
                   className="w-full flex items-center justify-between px-4 py-3 text-left"
                   onClick={() => setExpanded(isExpanded ? null : order.id)}
@@ -98,6 +119,24 @@ export function OrdersPage() {
                           </a>
                         ))}
                       </div>
+                    )}
+                    {order.items.length > 0 && (
+                      <button
+                        onClick={() => handleReorder(order)}
+                        disabled={isReordering}
+                        className="w-full flex items-center justify-center gap-2 bg-green-50 hover:bg-green-100 disabled:opacity-50 text-green-700 font-semibold text-sm py-2.5 rounded-xl transition-colors"
+                      >
+                        {isReordering ? (
+                          'Adding to cart…'
+                        ) : (
+                          <>
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                            </svg>
+                            Reorder
+                          </>
+                        )}
+                      </button>
                     )}
                   </div>
                 )}
