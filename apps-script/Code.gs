@@ -314,22 +314,15 @@ function deleteProduct(body) {
 //  Auth
 // ============================================================
 function signUp(body) {
-  var rlKey = 'signup_' + (body.email || '').replace(/[^a-z0-9]/gi, '_');
-  if (!checkRateLimit(rlKey)) return err('Too many attempts. Try again in 5 minutes.');
-
   var users = sheetData('Users');
   var exists = users.some(function(u) { return u.email === body.email; });
-  if (exists) {
-    recordFailedAttempt(rlKey);
-    return err('Email already registered');
-  }
+  if (exists) return err('Email already registered');
 
   var id = uuid();
   sheet('Users').appendRow([
     id, body.name, body.email, hashPassword(body.password),
     body.phone, new Date().toISOString(), '', '',
   ]);
-  clearRateLimit(rlKey);
   var token = generateUserToken(id);
   return ok({ user: { id: id, name: body.name, email: body.email, phone: body.phone }, token: token });
 }
