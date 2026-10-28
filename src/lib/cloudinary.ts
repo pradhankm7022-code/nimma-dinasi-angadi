@@ -1,6 +1,9 @@
 const CLOUD_NAME = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME as string
 const UPLOAD_PRESET = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET as string
 
+const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif']
+const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10 MB
+
 export function compressImage(file: File, maxPx = 800, quality = 0.8): Promise<File> {
   return new Promise((resolve, reject) => {
     const img = new Image()
@@ -28,6 +31,8 @@ export function compressImage(file: File, maxPx = 800, quality = 0.8): Promise<F
 }
 
 export async function uploadToCloudinary(file: File): Promise<string> {
+  if (!ALLOWED_TYPES.includes(file.type)) throw new Error('Only image files are allowed (JPG, PNG, WebP)')
+  if (file.size > MAX_FILE_SIZE) throw new Error('File too large — maximum size is 10 MB')
   const compressed = await compressImage(file)
   const fd = new FormData()
   fd.append('file', compressed)
