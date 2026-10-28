@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { staffLogin, savePushSubscription } from '../../api'
 
@@ -33,6 +33,13 @@ export function StaffLoginPage() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
+  useEffect(() => {
+    const entryAllowed =
+      sessionStorage.getItem('nda_staff_entry') === 'true' ||
+      localStorage.getItem('nda_is_staff') === 'true'
+    if (!entryAllowed) navigate('/', { replace: true })
+  }, [])
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError('')
@@ -42,6 +49,7 @@ export function StaffLoginPage() {
       sessionStorage.setItem('nda_staff', 'true')
       sessionStorage.setItem('nda_staff_token', res.staffToken)
       sessionStorage.setItem('nda_is_staff', 'true')
+      sessionStorage.removeItem('nda_staff_entry')
       localStorage.setItem('nda_is_staff', 'true')
       subscribePush() // fire-and-forget — don't block navigation
       navigate('/staff/orders', { replace: true })

@@ -20,7 +20,11 @@ export function LoginPage() {
   function handleTitleTap() {
     const next = tapCount + 1
     setTapCount(next)
-    if (next >= 5) { setTapCount(0); navigate('/staff/login') }
+    if (next >= 5) {
+      setTapCount(0)
+      sessionStorage.setItem('nda_staff_entry', 'true')
+      navigate('/staff/login')
+    }
   }
 
   async function handleSubmit(e: React.FormEvent) {
