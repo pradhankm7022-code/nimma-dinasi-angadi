@@ -61,7 +61,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [storeName, setStoreName] = useState(cached?.storeName ?? 'Nimma Dinasi Angadi')
   const [storeLogo, setStoreLogo] = useState(cached?.storeLogo ?? '')
   const [categories, setCategories] = useState<Category[]>(cached?.categories ?? [])
-  const [products] = useState<Product[]>(sortByOrderCount(cached?.products ?? []))
+  const [products, setProducts] = useState<Product[]>(sortByOrderCount(cached?.products ?? []))
   const [loadingStore, setLoadingStore] = useState(!cached)
   const [cart, setCart] = useState<CartItem[]>(readCart())
 
@@ -73,7 +73,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         setStoreName(settings.store_name)
         setStoreLogo(settings.store_logo_url)
         setCategories(settings.categories)
-        // Update cache with fresh order counts but don't change displayed order
+        if (!cached) setProducts(sortByOrderCount(productsRes.products))
         writeCache({
           storeName: settings.store_name,
           storeLogo: settings.store_logo_url,

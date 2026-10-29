@@ -4,6 +4,7 @@ import { getAllOrders, finishBagging, updateOrderStatus } from '../../api'
 import type { CartItem, Order } from '../../types'
 import { KaButton } from '../../components/ui/KaButton'
 import { useLang } from '../../contexts/LangContext'
+import { useStorePath } from '../../lib/useStorePath'
 
 const STATUS_COLORS: Record<string, string> = {
   Pending: 'bg-yellow-100 text-yellow-700',
@@ -21,10 +22,10 @@ export function StaffOrdersPage() {
   const [bagging, setBagging] = useState<Record<string, ItemState[]>>({})
   const { lang } = useLang()
   const navigate = useNavigate()
+  const sp = useStorePath()
 
   useEffect(() => {
-    // Replace entire history stack so back button exits the app
-    window.history.replaceState(null, '', '/staff/orders')
+    window.history.replaceState(null, '', sp('/staff/orders'))
   }, [])
 
   function handleLogout() {
@@ -32,7 +33,7 @@ export function StaffOrdersPage() {
     sessionStorage.removeItem('nda_staff_token')
     sessionStorage.removeItem('nda_is_staff')
     localStorage.removeItem('nda_is_staff')
-    navigate('/staff/login', { replace: true })
+    navigate(sp('/staff/login'), { replace: true })
   }
 
   useEffect(() => {
@@ -94,7 +95,7 @@ export function StaffOrdersPage() {
         <h1 className="text-lg font-bold text-gray-900">Orders</h1>
         <div className="flex items-center gap-3">
           <KaButton />
-          <Link to="/staff/products" className="text-sm text-green-600 font-medium hover:underline">Products</Link>
+          <Link to={sp('/staff/products')} className="text-sm text-green-600 font-medium hover:underline">Products</Link>
           <button onClick={handleLogout} className="p-2 text-gray-400 hover:text-red-500 hover:bg-gray-100 rounded-lg transition-colors" title="Logout">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h6a2 2 0 012 2v1" />

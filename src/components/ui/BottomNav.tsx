@@ -1,22 +1,24 @@
 import { Link, useLocation } from 'react-router-dom'
 import { useStore } from '../../contexts/StoreContext'
+import { useStorePath } from '../../lib/useStorePath'
 
 export function BottomNav() {
   const { pathname } = useLocation()
   const { cartCount } = useStore()
+  const sp = useStorePath()
 
   const links = [
-    { to: '/', label: 'Shop', icon: (
+    { to: sp('/'), label: 'Shop', icon: (
       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l9-9 9 9M5 10v9a1 1 0 001 1h4v-5h4v5h4a1 1 0 001-1v-9" />
       </svg>
     )},
-    { to: '/cart', label: 'Cart', icon: (
+    { to: sp('/cart'), label: 'Cart', icon: (
       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13l-1.5 6h13M7 13L5.4 5M10 21a1 1 0 100-2 1 1 0 000 2zm7 0a1 1 0 100-2 1 1 0 000 2z" />
       </svg>
     ), badge: cartCount },
-    { to: '/orders', label: 'Orders', icon: (
+    { to: sp('/orders'), label: 'Orders', icon: (
       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
       </svg>

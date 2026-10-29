@@ -8,6 +8,7 @@ import { useStore } from '../../contexts/StoreContext'
 import { useLang } from '../../contexts/LangContext'
 import type { Category, Product, ProductVariant } from '../../types'
 import { ImageUploader } from '../../components/staff/ImageUploader'
+import { useStorePath } from '../../lib/useStorePath'
 import { KaButton } from '../../components/ui/KaButton'
 
 type Tab = 'products' | 'categories'
@@ -32,6 +33,7 @@ const EMPTY_PRODUCT: Omit<Product, 'id'> = {
 export function StaffProductsPage() {
   const { categories, setCategories } = useStore()
   const { lang } = useLang()
+  const sp = useStorePath()
   const [tab, setTab] = useState<Tab>('products')
 
   // Products state
@@ -161,7 +163,7 @@ export function StaffProductsPage() {
     try {
       if (isNewCat) {
         const res = await createCategory(editingCat.name, editingCat.image_url, getStaffToken())
-        setCategories([...categories, { ...editingCat, id: res.id }])
+        setCategories([...categories, { ...editingCat, id: res.id, name_kn: editingCat.name_kn || editingCat.name }])
       } else {
         await updateCategory(editingCatId, editingCat.name, editingCat.image_url, getStaffToken())
         setCategories(categories.map(c => c.id === editingCatId ? { ...editingCat, id: editingCatId } : c))
@@ -337,7 +339,7 @@ export function StaffProductsPage() {
     <div className="min-h-svh bg-gray-50 pb-6">
       <div className="bg-white border-b border-gray-100 sticky top-0 z-10 px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <Link to="/staff/orders" className="p-2 -ml-2 text-gray-600 hover:bg-gray-100 rounded-lg">
+          <Link to={sp('/staff/orders')} className="p-2 -ml-2 text-gray-600 hover:bg-gray-100 rounded-lg">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>

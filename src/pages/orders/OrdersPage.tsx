@@ -5,6 +5,7 @@ import { useAuth } from '../../contexts/AuthContext'
 import { useStore } from '../../contexts/StoreContext'
 import { getMyOrders } from '../../api'
 import type { Order } from '../../types'
+import { useStorePath } from '../../lib/useStorePath'
 
 const STATUS_COLORS: Record<string, string> = {
   Pending: 'bg-yellow-100 text-yellow-700',
@@ -17,6 +18,7 @@ export function OrdersPage() {
   const { addToCart } = useStore()
   const location = useLocation()
   const navigate = useNavigate()
+  const sp = useStorePath()
   const newOrder = (location.state as { newOrder?: string } | null)?.newOrder
   const [orders, setOrders] = useState<Order[]>([])
   const [loading, setLoading] = useState(true)
@@ -45,7 +47,7 @@ export function OrdersPage() {
       })
     })
     setReordered(order.id)
-    setTimeout(() => navigate('/cart'), 800)
+    setTimeout(() => navigate(sp('/cart')), 800)
   }
 
   return (

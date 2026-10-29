@@ -1,16 +1,18 @@
 import { Navigate, Outlet } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
+import { useStorePath } from '../lib/useStorePath'
 
 export function RequireAuth() {
   const { user, loading } = useAuth()
+  const sp = useStorePath()
   if (loading) return null
   if (user) return <Outlet />
-  // Staff device should go to staff PIN, not customer login
-  if (localStorage.getItem('nda_is_staff') === 'true') return <Navigate to="/staff/login" replace />
-  return <Navigate to="/login" replace />
+  if (localStorage.getItem('nda_is_staff') === 'true') return <Navigate to={sp('/staff/login')} replace />
+  return <Navigate to={sp('/login')} replace />
 }
 
 export function RequireStaff() {
   const staffAuthed = sessionStorage.getItem('nda_staff') === 'true'
-  return staffAuthed ? <Outlet /> : <Navigate to="/staff/login" replace />
+  const sp = useStorePath()
+  return staffAuthed ? <Outlet /> : <Navigate to={sp('/staff/login')} replace />
 }

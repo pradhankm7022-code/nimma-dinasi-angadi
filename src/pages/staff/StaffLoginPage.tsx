@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { staffLogin, savePushSubscription } from '../../api'
+import { useStorePath } from '../../lib/useStorePath'
 
 const VAPID_PUBLIC = import.meta.env.VITE_VAPID_PUBLIC_KEY as string
 
@@ -29,6 +30,7 @@ async function subscribePush() {
 
 export function StaffLoginPage() {
   const navigate = useNavigate()
+  const sp = useStorePath()
   const [pin, setPin] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
@@ -37,7 +39,7 @@ export function StaffLoginPage() {
     const entryAllowed =
       sessionStorage.getItem('nda_staff_entry') === 'true' ||
       localStorage.getItem('nda_is_staff') === 'true'
-    if (!entryAllowed) navigate('/', { replace: true })
+    if (!entryAllowed) navigate(sp('/'), { replace: true })
   }, [])
 
   async function handleSubmit(e: React.FormEvent) {
@@ -52,7 +54,7 @@ export function StaffLoginPage() {
       sessionStorage.removeItem('nda_staff_entry')
       localStorage.setItem('nda_is_staff', 'true')
       subscribePush() // fire-and-forget — don't block navigation
-      navigate('/staff/orders', { replace: true })
+      navigate(sp('/staff/orders'), { replace: true })
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Invalid PIN')
     } finally {

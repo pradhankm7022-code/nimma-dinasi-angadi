@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { signIn } from '../../api'
 import { useAuth } from '../../contexts/AuthContext'
 import { useStore } from '../../contexts/StoreContext'
+import { useStorePath } from '../../lib/useStorePath'
 
 type Step = 'ask' | 'signin'
 
@@ -10,6 +11,7 @@ export function LoginPage() {
   const { login } = useAuth()
   const { storeName, storeLogo } = useStore()
   const navigate = useNavigate()
+  const sp = useStorePath()
   const [step, setStep] = useState<Step>('ask')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -23,7 +25,7 @@ export function LoginPage() {
     if (next >= 5) {
       setTapCount(0)
       sessionStorage.setItem('nda_staff_entry', 'true')
-      navigate('/staff/login')
+      navigate(sp('/staff/login'))
     }
   }
 
@@ -34,7 +36,7 @@ export function LoginPage() {
     try {
       const res = await signIn(email, password)
       login(res.user, res.token)
-      navigate('/', { replace: true })
+      navigate(sp('/'), { replace: true })
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Login failed')
     } finally {
@@ -72,7 +74,7 @@ export function LoginPage() {
 
           <div className="space-y-3">
             <button
-              onClick={() => navigate('/signup')}
+              onClick={() => navigate(sp('/signup'))}
               className="w-full bg-green-600 hover:bg-green-700 active:bg-green-800 text-white font-semibold py-3.5 rounded-xl text-sm transition-colors shadow-sm"
             >
               Yes, create an account

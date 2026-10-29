@@ -6,6 +6,7 @@ import { KaButton } from '../../components/ui/KaButton'
 import { useAuth } from '../../contexts/AuthContext'
 import { useLang } from '../../contexts/LangContext'
 import { useStore } from '../../contexts/StoreContext'
+import { useStorePath } from '../../lib/useStorePath'
 
 type View = 'categories' | 'all'
 
@@ -14,6 +15,7 @@ export function CatalogPage() {
   const { user, logout } = useAuth()
   const { lang } = useLang()
   const navigate = useNavigate()
+  const sp = useStorePath()
   const [searchParams, setSearchParams] = useSearchParams()
   const [view, setView] = useState<View>(searchParams.get('view') === 'categories' ? 'categories' : 'all')
   const [search, setSearch] = useState('')
@@ -27,7 +29,7 @@ export function CatalogPage() {
 
   function handleLogout() {
     logout()
-    navigate('/login', { replace: true })
+    navigate(sp('/login'), { replace: true })
   }
 
   function handleShare() {
@@ -162,7 +164,7 @@ export function CatalogPage() {
             {categories.map(cat => (
               <Link
                 key={cat.id}
-                to={`/category/${cat.id}`}
+                to={sp(`/category/${cat.id}`)}
                 className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden active:scale-95 transition-transform"
               >
                 <div className="aspect-square bg-gray-100 overflow-hidden">

@@ -1,11 +1,13 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { forgotPassword, verifyOTP } from '../../api'
+import { useStorePath } from '../../lib/useStorePath'
 
 type Step = 'email' | 'otp'
 
 export function ForgotPasswordPage() {
   const navigate = useNavigate()
+  const sp = useStorePath()
   const [step, setStep] = useState<Step>('email')
   const [email, setEmail] = useState('')
   const [otp, setOtp] = useState('')
@@ -33,7 +35,7 @@ export function ForgotPasswordPage() {
     setLoading(true)
     try {
       await verifyOTP(email, otp, newPassword)
-      navigate('/login', { replace: true })
+      navigate(sp('/login'), { replace: true })
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Verification failed')
     } finally {
@@ -96,7 +98,7 @@ export function ForgotPasswordPage() {
         </div>
 
         <p className="text-center mt-4 text-sm text-gray-500">
-          <Link to="/login" className="text-green-600 hover:underline">Back to login</Link>
+          <Link to={sp('/login')} className="text-green-600 hover:underline">Back to login</Link>
         </p>
       </div>
     </div>

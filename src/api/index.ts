@@ -1,12 +1,20 @@
 import type { CartItem, Product, StoreSettings } from '../types'
 
-const BASE_URL = import.meta.env.VITE_API_URL as string
+let _storeUrl: string | null = null
+
+export function setStoreUrl(url: string) {
+  _storeUrl = url
+}
+
+function getBaseUrl(): string {
+  if (_storeUrl) return _storeUrl
+  // fallback to env var for single-store / dev mode
+  return import.meta.env.VITE_API_URL as string
+}
 
 async function callOnce<T>(params: Record<string, unknown>): Promise<T> {
-  const url = new URL(BASE_URL)
-  url.searchParams.set('action', params.action as string)
-  url.searchParams.set('payload', JSON.stringify(params))
-  const res = await fetch(url.toString())
+  const payload = encodeURIComponent(JSON.stringify(params))
+  const res = await fetch(`${getBaseUrl()}?action=${params.action as string}&payload=${payload}`)
   const text = await res.text()
   let data: Record<string, unknown>
   try {

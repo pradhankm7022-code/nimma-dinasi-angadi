@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Terms of Service — Nimma Dinasi Angadi</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 680px; margin: 40px auto; padding: 0 20px; color: #1a1a1a; line-height: 1.6; }
+    h1 { font-size: 1.6rem; margin-bottom: 4px; }
+    h2 { font-size: 1.1rem; margin-top: 32px; }
+    p, li { font-size: 0.95rem; color: #333; }
+    .meta { color: #888; font-size: 0.85rem; margin-bottom: 32px; }
+    a { color: #2563eb; }
+  </style>
+</head>
+<body>
+  <h1>Terms of Service</h1>
+  <p class="meta">Last updated: October 2026</p>
+
+  <p>By using Nimma Dinasi Angadi ("the Platform"), you agree to the following terms.</p>
+
+  <h2>1. About the Platform</h2>
+  <p>Nimma Dinasi Angadi is a grocery ordering platform that connects customers with local Kirana stores. Each store on the platform is independently operated by its owner.</p>
+
+  <h2>2. Customer Accounts</h2>
+  <ul>
+    <li>You must provide accurate information when creating an account.</li>
+    <li>You are responsible for keeping your password secure.</li>
+    <li>One account per person. Accounts are non-transferable.</li>
+  </ul>
+
+  <h2>3. Orders</h2>
+  <ul>
+    <li>Orders placed through the Platform are requests to the store. The store may accept or reject orders based on availability.</li>
+    <li>Prices and product availability are set by the store owner and may change without notice.</li>
+    <li>Payment is handled directly with the store (cash on pickup or as agreed with the store).</li>
+  </ul>
+
+  <h2>4. Acceptable Use</h2>
+  <ul>
+    <li>Do not misuse the Platform — no spam, fake orders, or attempts to disrupt service.</li>
+    <li>Do not attempt to access other customers' accounts or order data.</li>
+  </ul>
+
+  <h2>5. Limitation of Liability</h2>
+  <p>The Platform is provided as-is. We are not liable for any issues arising from order fulfilment, product quality, or store operations — these are the responsibility of the individual store owner.</p>
+
+  <h2>6. Changes to Terms</h2>
+  <p>We may update these terms from time to time. Continued use of the Platform after changes constitutes acceptance of the updated terms.</p>
+
+  <h2>7. Contact</h2>
+  <p>For questions about these terms, contact us at <a href="mailto:support@nimmadinasi.in">support@nimmadinasi.in</a>.</p>
+</body>
+</html>

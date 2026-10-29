@@ -3,8 +3,10 @@ import { useNavigate } from 'react-router-dom'
 import { BottomNav } from '../../components/ui/BottomNav'
 import { useAuth } from '../../contexts/AuthContext'
 import { useStore } from '../../contexts/StoreContext'
+import { useLang } from '../../contexts/LangContext'
 import { placeOrder } from '../../api'
 import { uploadToCloudinary } from '../../lib/cloudinary'
+import { useStorePath } from '../../lib/useStorePath'
 
 const PHOTOS_KEY = 'nda_cart_photos'
 
@@ -18,7 +20,9 @@ function writePhotos(urls: string[]) {
 export function CartPage() {
   const { cart, updateCartQty, clearCart } = useStore()
   const { user, sessionToken } = useAuth()
+  const { lang } = useLang()
   const navigate = useNavigate()
+  const sp = useStorePath()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [photoUrls, setPhotoUrls] = useState<string[]>(readPhotos)
@@ -66,7 +70,7 @@ export function CartPage() {
       clearCart()
       setPhotoUrls([])
       writePhotos([])
-      navigate('/orders', { state: { newOrder: res.order_number } })
+      navigate(sp('/orders'), { state: { newOrder: res.order_number } })
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Failed to place order')
     } finally {
@@ -135,8 +139,8 @@ export function CartPage() {
                   )}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-gray-900 truncate">{item.product_name_en}</p>
-                  <p className="text-xs text-gray-400">{item.product_name_kn}</p>
+                  <p className="text-sm font-semibold text-gray-900 truncate">{lang === 'kn' && item.product_name_kn ? item.product_name_kn : item.product_name_en}</p>
+                  <p className="text-xs text-gray-400">{lang === 'kn' ? item.product_name_en : item.product_name_kn}</p>
                   <p className="text-xs text-green-700 font-medium mt-0.5">{item.variant_label}</p>
                 </div>
                 <div className="flex flex-col items-end gap-2">

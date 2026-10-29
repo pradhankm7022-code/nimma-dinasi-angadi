@@ -2,10 +2,12 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { signUp } from '../../api'
 import { useAuth } from '../../contexts/AuthContext'
+import { useStorePath } from '../../lib/useStorePath'
 
 export function SignUpPage() {
   const { login } = useAuth()
   const navigate = useNavigate()
+  const sp = useStorePath()
   const [form, setForm] = useState({ name: '', email: '', password: '', phone: '' })
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
@@ -23,7 +25,7 @@ export function SignUpPage() {
     try {
       const res = await signUp(form.name, form.email, form.password, form.phone)
       login(res.user, res.token)
-      navigate('/', { replace: true })
+      navigate(sp('/'), { replace: true })
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Sign up failed')
     } finally {
@@ -67,7 +69,7 @@ export function SignUpPage() {
 
         <p className="text-center mt-4 text-sm text-gray-500">
           Already have an account?{' '}
-          <Link to="/login" className="text-green-600 hover:underline font-medium">Sign in</Link>
+          <Link to={sp('/login')} className="text-green-600 hover:underline font-medium">Sign in</Link>
         </p>
       </div>
     </div>
