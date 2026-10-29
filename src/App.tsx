@@ -77,6 +77,7 @@ function StoreLoader({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (!slug) { setError('No store slug in URL'); return }
+    localStorage.setItem('nda_last_slug', slug)
     resolveStoreUrl(slug)
       .then(url => { setStoreUrl(url); setReady(true) })
       .catch(() => setError('Store not found'))
@@ -91,10 +92,17 @@ function StoreLoader({ children }: { children: React.ReactNode }) {
   return <>{children}</>
 }
 
+function RootRedirect() {
+  const slug = localStorage.getItem('nda_last_slug')
+  if (slug) return <Navigate to={`/s/${slug}`} replace />
+  return <div className="min-h-svh flex items-center justify-center text-gray-400 text-sm">No store selected</div>
+}
+
 export default function App() {
   return (
     <BrowserRouter>
       <Routes>
+        <Route path="/" element={<RootRedirect />} />
         <Route path="/s/:slug/*" element={
           <StoreLoader>
             <AuthProvider>
