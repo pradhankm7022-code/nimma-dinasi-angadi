@@ -20,7 +20,7 @@ export default defineConfig({
         name: 'Nimma Dinasi Angadi',
         short_name: 'Angadi',
         description: 'Your Daily Store',
-        theme_color: '#16a34a',
+        theme_color: '#ffffff',
         background_color: '#ffffff',
         display: 'standalone',
         orientation: 'portrait',
