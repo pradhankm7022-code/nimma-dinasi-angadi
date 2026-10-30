@@ -7,6 +7,7 @@ interface AuthContextValue {
   loading: boolean
   login: (user: User, token: string) => void
   logout: () => void
+  updateUser: (partial: Partial<User>) => void
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null)
@@ -43,8 +44,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     localStorage.removeItem(TOKEN_KEY)
   }
 
+  function updateUser(partial: Partial<User>) {
+    setUser(prev => {
+      if (!prev) return prev
+      const next = { ...prev, ...partial }
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(next))
+      return next
+    })
+  }
+
   return (
-    <AuthContext.Provider value={{ user, sessionToken, loading, login, logout }}>
+    <AuthContext.Provider value={{ user, sessionToken, loading, login, logout, updateUser }}>
       {children}
     </AuthContext.Provider>
   )

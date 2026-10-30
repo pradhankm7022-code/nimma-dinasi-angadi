@@ -7,12 +7,13 @@ import { useAuth } from '../../contexts/AuthContext'
 import { useLang } from '../../contexts/LangContext'
 import { useStore } from '../../contexts/StoreContext'
 import { useStorePath } from '../../lib/useStorePath'
+import { updatePhone } from '../../api'
 
 type View = 'categories' | 'all'
 
 export function CatalogPage() {
   const { storeName, categories, products, loadingStore } = useStore()
-  const { user, logout } = useAuth()
+  const { user, logout, updateUser, sessionToken } = useAuth()
   const { lang } = useLang()
   const navigate = useNavigate()
   const sp = useStorePath()
@@ -20,6 +21,10 @@ export function CatalogPage() {
   const [view, setView] = useState<View>(searchParams.get('view') === 'categories' ? 'categories' : 'all')
   const [search, setSearch] = useState('')
   const [menuOpen, setMenuOpen] = useState(false)
+  const [editingPhone, setEditingPhone] = useState(false)
+  const [phoneValue, setPhoneValue] = useState('')
+  const [phoneSaving, setPhoneSaving] = useState(false)
+  const [phoneError, setPhoneError] = useState('')
   const menuRef = useRef<HTMLDivElement>(null)
 
   function switchView(v: View) {
@@ -30,6 +35,27 @@ export function CatalogPage() {
   function handleLogout() {
     logout()
     navigate(sp('/login'), { replace: true })
+  }
+
+  function startEditPhone() {
+    setPhoneValue(user?.phone ?? '')
+    setPhoneError('')
+    setEditingPhone(true)
+  }
+
+  async function savePhone() {
+    if (!user || !sessionToken) return
+    setPhoneSaving(true)
+    setPhoneError('')
+    try {
+      await updatePhone(user.id, sessionToken, phoneValue)
+      updateUser({ phone: phoneValue })
+      setEditingPhone(false)
+    } catch (err: unknown) {
+      setPhoneError(err instanceof Error ? err.message : 'Failed to save')
+    } finally {
+      setPhoneSaving(false)
+    }
   }
 
   function handleShare() {
@@ -106,7 +132,43 @@ export function CatalogPage() {
                     {/* User info */}
                     <div className="px-4 py-3 border-b border-gray-100">
                       <p className="text-sm font-semibold text-gray-900">{user?.name}</p>
-                      <p className="text-xs text-gray-400 mt-0.5">{user?.phone}</p>
+                      {editingPhone ? (
+                        <div className="mt-1.5 space-y-1">
+                          <div className="flex items-center gap-1.5">
+                            <input
+                              type="tel"
+                              value={phoneValue}
+                              onChange={e => setPhoneValue(e.target.value)}
+                              className="flex-1 border border-gray-200 rounded-lg px-2 py-1 text-xs outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500"
+                              placeholder="Phone number"
+                              autoFocus
+                            />
+                            <button
+                              onClick={savePhone}
+                              disabled={phoneSaving}
+                              className="text-xs bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white font-medium px-2 py-1 rounded-lg"
+                            >
+                              {phoneSaving ? '…' : 'Save'}
+                            </button>
+                            <button
+                              onClick={() => setEditingPhone(false)}
+                              className="text-xs text-gray-400 hover:text-gray-600 px-1 py-1"
+                            >
+                              ✕
+                            </button>
+                          </div>
+                          {phoneError && <p className="text-xs text-red-500">{phoneError}</p>}
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-1.5 mt-0.5">
+                          <p className="text-xs text-gray-400">{user?.phone || 'No phone'}</p>
+                          <button onClick={startEditPhone} className="text-gray-300 hover:text-gray-500 transition-colors">
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536M9 13l6.586-6.586a2 2 0 012.828 2.828L11.828 15.828a2 2 0 01-1.414.586H9v-2a2 2 0 01.586-1.414z" />
+                            </svg>
+                          </button>
+                        </div>
+                      )}
                     </div>
                     {/* Share */}
                     <button

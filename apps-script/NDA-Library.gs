@@ -132,6 +132,7 @@ function doGet(e) {
     if (action === 'signIn')               return signIn({ email: p.email, password: p.password });
     if (action === 'forgotPassword')        return forgotPassword({ email: p.email });
     if (action === 'verifyOTP')             return verifyOTP({ email: p.email, otp: p.otp, newPassword: p.newPassword });
+    if (action === 'updatePhone')           return updatePhone({ customerId: p.customerId, token: p.token, phone: p.phone });
     if (action === 'placeOrder')            return placeOrder({ customerId: p.customerId, token: p.token, items: p.items, photoUrls: p.photoUrls });
     if (action === 'updateOrderStatus')     return updateOrderStatus({ orderId: p.orderId, status: p.status, staffToken: p.staffToken });
     if (action === 'finishBagging')         return finishBagging({ orderId: p.orderId, items: p.items, staffToken: p.staffToken });
@@ -409,6 +410,19 @@ function staffLogin(body) {
   clearRateLimit(rlKey);
   var token = generateStaffToken();
   return ok({ staffToken: token });
+}
+
+function updatePhone(body) {
+  if (!verifyUserToken(body.customerId, body.token)) return err('Unauthorized');
+  var s = sheet('Users');
+  var data = s.getDataRange().getValues();
+  for (var i = 1; i < data.length; i++) {
+    if (data[i][0] === body.customerId) {
+      s.getRange(i + 1, 5, 1, 1).setValues([[body.phone]]);
+      return ok({ phone: body.phone });
+    }
+  }
+  return err('User not found');
 }
 
 // ============================================================

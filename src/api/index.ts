@@ -58,6 +58,9 @@ export const forgotPassword = (email: string) =>
 export const verifyOTP = (email: string, otp: string, newPassword: string) =>
   call<{ ok: true }>({ action: 'verifyOTP', email, otp, newPassword })
 
+export const updatePhone = (customerId: string, token: string, phone: string) =>
+  call<{ ok: true; phone: string }>({ action: 'updatePhone', customerId, token, phone })
+
 // Store data
 export const getSettings = () =>
   call<{ ok: true } & StoreSettings>({ action: 'getSettings' })
