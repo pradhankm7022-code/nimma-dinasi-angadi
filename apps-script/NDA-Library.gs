@@ -382,9 +382,10 @@ function verifyOTP(body) {
     if (data[i][2] === body.email) {
       var storedOTP = data[i][6];
       var expiry = new Date(data[i][7]);
-      if (storedOTP !== body.otp) return err('Invalid OTP');
+      if (String(storedOTP) !== String(body.otp)) return err('Invalid OTP');
       if (new Date() > expiry) return err('OTP expired');
-      s.getRange(i + 1, 4, 1, 3).setValues([[hashPassword(body.newPassword), '', '']]);
+      s.getRange(i + 1, 4, 1, 1).setValues([[hashPassword(body.newPassword)]]);
+      s.getRange(i + 1, 7, 1, 2).setValues([['', '']]);
       return ok();
     }
   }
