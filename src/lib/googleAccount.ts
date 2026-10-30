@@ -2,30 +2,64 @@ const CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID as string | undefined
 
 export const hasGoogleClientId = !!CLIENT_ID
 
-type AccountInfo = { email: string; name?: string }
-let pendingCallback: ((info: AccountInfo) => void) | null = null
-let fallbackContainer: HTMLDivElement | null = null
+let initialized = false
+let pendingCallback: ((info: { email: string; name?: string }) => void) | null = null
+let modalEl: HTMLDivElement | null = null
 let backdropEl: HTMLDivElement | null = null
 
-function removeFallback() {
-  fallbackContainer?.remove()
+function removeModal() {
+  modalEl?.remove()
   backdropEl?.remove()
-  fallbackContainer = null
+  modalEl = null
   backdropEl = null
 }
 
-function showFallbackButton() {
+function setup() {
+  if (initialized) return
   const gid = (window as any).google?.accounts?.id
-  if (!gid || !CLIENT_ID || fallbackContainer) return
+  if (!gid || !CLIENT_ID) return
+  gid.initialize({
+    client_id: CLIENT_ID,
+    use_fedcm_for_prompt: true,
+    callback: (credentialResponse: any) => {
+      try {
+        const payload = JSON.parse(atob(credentialResponse.credential.split('.')[1]))
+        if (payload.email) {
+          removeModal()
+          pendingCallback?.({ email: payload.email, name: payload.name })
+        }
+      } catch { /* ignore */ }
+    },
+    auto_select: false,
+    cancel_on_tap_outside: true,
+  })
+  initialized = true
+}
 
-  const container = document.createElement('div')
-  Object.assign(container.style, {
+export function pickGoogleAccount(onAccount: (info: { email: string; name?: string }) => void) {
+  if (!CLIENT_ID) return
+  const gid = (window as any).google?.accounts?.id
+  if (!gid) return
+
+  setup()
+  removeModal()
+  pendingCallback = onAccount
+
+  const backdrop = document.createElement('div') as HTMLDivElement
+  Object.assign(backdrop.style, {
+    position: 'fixed', inset: '0', background: 'rgba(0,0,0,0.4)', zIndex: '9998',
+  })
+  backdrop.onclick = removeModal
+
+  const modal = document.createElement('div') as HTMLDivElement
+  Object.assign(modal.style, {
     position: 'fixed', top: '50%', left: '50%',
     transform: 'translate(-50%, -50%)', zIndex: '9999',
     background: '#fff', borderRadius: '12px',
     boxShadow: '0 4px 24px rgba(0,0,0,0.18)',
     padding: '20px', display: 'flex',
     flexDirection: 'column', alignItems: 'center', gap: '12px',
+    minWidth: '300px',
   })
 
   const label = document.createElement('p')
@@ -40,58 +74,19 @@ function showFallbackButton() {
     fontSize: '13px', color: '#9ca3af', background: 'none',
     border: 'none', cursor: 'pointer', padding: '4px',
   })
-  cancelBtn.onclick = removeFallback
+  cancelBtn.onclick = removeModal
 
-  const backdrop = document.createElement('div') as HTMLDivElement
-  Object.assign(backdrop.style, {
-    position: 'fixed', inset: '0', background: 'rgba(0,0,0,0.4)', zIndex: '9998',
-  })
-  backdrop.onclick = removeFallback
-
-  container.append(label, btnWrap, cancelBtn)
-  document.body.append(backdrop, container)
-  fallbackContainer = container
+  modal.append(label, btnWrap, cancelBtn)
+  document.body.append(backdrop, modal)
+  modalEl = modal
   backdropEl = backdrop
 
   gid.renderButton(btnWrap, {
     type: 'standard', theme: 'outline', size: 'large',
-    text: 'continue_with', shape: 'rectangular', width: 280,
+    text: 'continue_with', shape: 'rectangular', width: 260,
   })
 }
 
-// Single entry point used by all pages.
-// onAccount receives email (always) and name (if available, for signup).
-export function pickGoogleAccount(onAccount: (info: AccountInfo) => void) {
-  if (!CLIENT_ID) return
-  const gid = (window as any).google?.accounts?.id
-  if (!gid) return
-
-  removeFallback()
-  pendingCallback = onAccount
-
-  gid.initialize({
-    client_id: CLIENT_ID,
-    callback: (credentialResponse: any) => {
-      try {
-        const payload = JSON.parse(atob(credentialResponse.credential.split('.')[1]))
-        if (payload.email) {
-          removeFallback()
-          pendingCallback?.({ email: payload.email, name: payload.name })
-        }
-      } catch { /* ignore */ }
-    },
-    auto_select: false,
-    cancel_on_tap_outside: true,
-  })
-
-  gid.prompt((notification: any) => {
-    if (notification.isNotDisplayed() || notification.isSkippedMoment() || notification.isDismissedMoment()) {
-      showFallbackButton()
-    }
-  })
-}
-
-// Convenience wrapper for pages that only need email
 export function pickGoogleEmail(onEmail: (email: string) => void) {
   pickGoogleAccount(({ email }) => onEmail(email))
 }
