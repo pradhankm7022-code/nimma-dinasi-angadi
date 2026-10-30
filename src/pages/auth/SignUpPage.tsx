@@ -23,7 +23,7 @@ export function SignUpPage() {
         callback: (response: any) => {
           try {
             const payload = JSON.parse(atob(response.credential.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')))
-            if (payload.email) setForm(f => ({ ...f, email: payload.email }))
+            if (payload.email) setForm(f => ({ ...f, email: payload.email, name: payload.name || f.name }))
           } catch { /* ignore */ }
         },
         auto_select: false,
