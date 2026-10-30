@@ -27,7 +27,12 @@ export interface Category {
 export interface StoreSettings {
   store_name: string
   store_logo_url: string
+  store_config?: string
   categories: Category[]
+}
+
+export interface StoreConfig {
+  showPrice?: boolean
 }
 
 export interface CartItem {

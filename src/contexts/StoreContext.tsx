@@ -1,10 +1,11 @@
 import { createContext, useContext, useEffect, useState } from 'react'
 import { getProducts, getSettings } from '../api'
-import type { CartItem, Category, Product } from '../types'
+import type { CartItem, Category, Product, StoreConfig } from '../types'
 
 interface StoreContextValue {
   storeName: string
   storeLogo: string
+  storeConfig: StoreConfig
   categories: Category[]
   setCategories: (cats: Category[]) => void
   products: Product[]
@@ -36,6 +37,7 @@ function writeCart(cart: CartItem[]) {
 interface StoreCache {
   storeName: string
   storeLogo: string
+  storeConfig: StoreConfig
   categories: Category[]
   products: Product[]
 }
@@ -55,11 +57,16 @@ function sortByOrderCount(products: Product[]) {
   return [...products].sort((a, b) => (b.order_count ?? 0) - (a.order_count ?? 0))
 }
 
+function parseConfig(raw?: string): StoreConfig {
+  try { return raw ? JSON.parse(raw) : {} } catch { return {} }
+}
+
 export function StoreProvider({ children }: { children: React.ReactNode }) {
   const cached = readCache()
 
   const [storeName, setStoreName] = useState(cached?.storeName ?? 'Nimma Dinasi Angadi')
   const [storeLogo, setStoreLogo] = useState(cached?.storeLogo ?? '')
+  const [storeConfig, setStoreConfig] = useState<StoreConfig>(cached?.storeConfig ?? {})
   const [categories, setCategories] = useState<Category[]>(cached?.categories ?? [])
   const [products, setProducts] = useState<Product[]>(sortByOrderCount(cached?.products ?? []))
   const [loadingStore, setLoadingStore] = useState(!cached)
@@ -78,13 +85,16 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     // Products are NOT re-sorted after fetch to avoid visible list reorder
     Promise.all([getSettings(), getProducts()])
       .then(([settings, productsRes]) => {
+        const config = parseConfig(settings.store_config)
         setStoreName(settings.store_name)
         setStoreLogo(settings.store_logo_url)
+        setStoreConfig(config)
         setCategories(settings.categories)
         if (!cached) setProducts(sortByOrderCount(productsRes.products))
         writeCache({
           storeName: settings.store_name,
           storeLogo: settings.store_logo_url,
+          storeConfig: config,
           categories: settings.categories,
           products: productsRes.products,
         })
@@ -127,7 +137,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <StoreContext.Provider value={{
-      storeName, storeLogo, categories, setCategories, products, loadingStore,
+      storeName, storeLogo, storeConfig, categories, setCategories, products, loadingStore,
       cart, addToCart, updateCartQty, clearCart, cartCount,
     }}>
       {children}

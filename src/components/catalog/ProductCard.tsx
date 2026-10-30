@@ -8,7 +8,7 @@ interface Props {
 }
 
 export function ProductCard({ product }: Props) {
-  const { addToCart, cart, updateCartQty } = useStore()
+  const { addToCart, cart, updateCartQty, storeConfig } = useStore()
   const { lang } = useLang()
   const defaultIdx = product.variants.findIndex(v => v.default) ?? 0
   const [variantIdx, setVariantIdx] = useState(defaultIdx >= 0 ? defaultIdx : 0)
@@ -104,7 +104,11 @@ export function ProductCard({ product }: Props) {
         )}
 
         {/* Qty control */}
-        <div className="mt-auto flex items-center justify-end">
+        <div className="mt-auto flex items-center justify-between">
+          {storeConfig.showPrice && variant.price > 0 && (
+            <span className="text-sm font-semibold text-gray-700">₹{variant.price}</span>
+          )}
+          <div className={storeConfig.showPrice && variant.price > 0 ? '' : 'ml-auto'}>
           {qty === 0 ? (
             <button
               onClick={increment}
@@ -119,8 +123,8 @@ export function ProductCard({ product }: Props) {
               <button onClick={increment} className="px-3 py-1 text-white font-bold text-lg leading-none active:bg-green-700">+</button>
             </div>
           )}
+          </div>
         </div>
-      </div>
     </div>
   )
 }

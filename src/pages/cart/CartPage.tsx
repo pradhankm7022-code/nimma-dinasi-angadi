@@ -18,7 +18,7 @@ function writePhotos(urls: string[]) {
 }
 
 export function CartPage() {
-  const { cart, updateCartQty, clearCart } = useStore()
+  const { cart, updateCartQty, clearCart, storeConfig } = useStore()
   const { user, sessionToken } = useAuth()
   const { lang } = useLang()
   const navigate = useNavigate()
@@ -169,6 +169,9 @@ export function CartPage() {
                   <p className="text-sm font-semibold text-gray-900 truncate">{lang === 'kn' && item.product_name_kn ? item.product_name_kn : item.product_name_en}</p>
                   <p className="text-xs text-gray-400">{lang === 'kn' ? item.product_name_en : item.product_name_kn}</p>
                   <p className="text-xs text-green-700 font-medium mt-0.5">{item.variant_label}</p>
+                  {storeConfig.showPrice && item.variant_price > 0 && (
+                    <p className="text-xs text-gray-500 mt-0.5">₹{item.variant_price} × {item.qty} = <span className="font-semibold text-gray-700">₹{item.variant_price * item.qty}</span></p>
+                  )}
                 </div>
                 <div className="flex flex-col items-end gap-2">
                   <div className="flex items-center bg-green-600 rounded-lg overflow-hidden">
@@ -204,7 +207,13 @@ export function CartPage() {
             ))}
 
             {/* Place order */}
-            <div className="bg-white rounded-xl border border-gray-100 p-4 shadow-sm">
+            <div className="bg-white rounded-xl border border-gray-100 p-4 shadow-sm space-y-3">
+              {storeConfig.showPrice && cart.some(i => i.variant_price > 0) && (
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-gray-500">Total</span>
+                  <span className="font-bold text-gray-900">₹{cart.reduce((sum, i) => sum + i.variant_price * i.qty, 0)}</span>
+                </div>
+              )}
               <button
                 onClick={handlePlaceOrder} disabled={loading}
                 className="w-full bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white font-semibold py-3 rounded-xl text-sm transition-colors"

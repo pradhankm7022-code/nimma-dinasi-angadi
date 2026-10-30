@@ -205,6 +205,7 @@ function getSettings() {
   return ok({
     store_name: map['store_name'] || '',
     store_logo_url: map['store_logo_url'] || '',
+    store_config: map['store_config'] || '{}',
     categories: categories,
   });
 }
