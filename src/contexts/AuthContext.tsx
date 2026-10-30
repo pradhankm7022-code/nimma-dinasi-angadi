@@ -42,6 +42,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setSessionToken(null)
     localStorage.removeItem(STORAGE_KEY)
     localStorage.removeItem(TOKEN_KEY)
+    localStorage.removeItem('nda_cart')
+    localStorage.removeItem('nda_cart_photos')
+    window.dispatchEvent(new Event('nda_logout'))
   }
 
   function updateUser(partial: Partial<User>) {

@@ -66,6 +66,14 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [cart, setCart] = useState<CartItem[]>(readCart())
 
   useEffect(() => {
+    function onLogout() {
+      setCart([])
+    }
+    window.addEventListener('nda_logout', onLogout)
+    return () => window.removeEventListener('nda_logout', onLogout)
+  }, [])
+
+  useEffect(() => {
     // Always fetch fresh in background — stale-while-revalidate
     // Products are NOT re-sorted after fetch to avoid visible list reorder
     Promise.all([getSettings(), getProducts()])
