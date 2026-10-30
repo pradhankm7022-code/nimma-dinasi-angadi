@@ -125,6 +125,7 @@ export function ProductCard({ product }: Props) {
           )}
           </div>
         </div>
+      </div>
     </div>
   )
 }

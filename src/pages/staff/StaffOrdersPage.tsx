@@ -5,6 +5,7 @@ import type { CartItem, Order } from '../../types'
 import { KaButton } from '../../components/ui/KaButton'
 import { useLang } from '../../contexts/LangContext'
 import { useStorePath } from '../../lib/useStorePath'
+import { useStore } from '../../contexts/StoreContext'
 
 const STATUS_COLORS: Record<string, string> = {
   Pending: 'bg-yellow-100 text-yellow-700',
@@ -23,6 +24,7 @@ export function StaffOrdersPage() {
   const { lang } = useLang()
   const navigate = useNavigate()
   const sp = useStorePath()
+  const { storeConfig } = useStore()
 
   useEffect(() => {
     window.history.replaceState(null, '', sp('/staff/orders'))
@@ -182,6 +184,9 @@ export function StaffOrdersPage() {
                             </div>
                             <div className="flex items-center gap-2 flex-shrink-0 ml-2">
                               <span className="text-gray-500 text-xs">x{item.qty}</span>
+                              {storeConfig.showStaffPrice && item.variant_price > 0 && (
+                                <span className="text-xs font-semibold text-gray-700">₹{item.variant_price * item.qty}</span>
+                              )}
                               {isBagging && state === 'pending' && (
                                 <>
                                   <button
@@ -261,6 +266,13 @@ export function StaffOrdersPage() {
                         )
                       })}
                     </ul>
+
+                    {storeConfig.showStaffPrice && order.items.some(i => i.variant_price > 0) && (
+                      <div className="flex items-center justify-between text-sm font-semibold border-t border-gray-100 pt-2">
+                        <span className="text-gray-500">Order Total</span>
+                        <span className="text-gray-900">₹{order.items.reduce((sum, i) => sum + i.variant_price * i.qty, 0)}</span>
+                      </div>
+                    )}
 
                     {order.status === 'Pending' && !isBagging && (
                       <button

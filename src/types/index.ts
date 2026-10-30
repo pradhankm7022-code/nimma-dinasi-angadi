@@ -33,6 +33,7 @@ export interface StoreSettings {
 
 export interface StoreConfig {
   showPrice?: boolean
+  showStaffPrice?: boolean
 }
 
 export interface CartItem {
