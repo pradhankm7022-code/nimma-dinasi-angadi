@@ -15,22 +15,32 @@ export function SignUpPage() {
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
-    if (!GOOGLE_CLIENT_ID || !(window as any).google) return
-    ;(window as any).google.accounts.id.initialize({
-      client_id: GOOGLE_CLIENT_ID,
-      callback: (response: any) => {
-        try {
-          const payload = JSON.parse(atob(response.credential.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')))
-          if (payload.email) setForm(f => ({ ...f, email: payload.email }))
-        } catch { /* ignore */ }
-      },
-      auto_select: false,
-      cancel_on_tap_outside: true,
-    })
+    if (!GOOGLE_CLIENT_ID) return
+
+    function initGsi() {
+      ;(window as any).google.accounts.id.initialize({
+        client_id: GOOGLE_CLIENT_ID,
+        callback: (response: any) => {
+          try {
+            const payload = JSON.parse(atob(response.credential.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')))
+            if (payload.email) setForm(f => ({ ...f, email: payload.email }))
+          } catch { /* ignore */ }
+        },
+        auto_select: false,
+        cancel_on_tap_outside: true,
+      })
+    }
+
+    if ((window as any).google?.accounts) {
+      initGsi()
+    } else {
+      const script = document.querySelector('script[src*="accounts.google.com/gsi"]')
+      if (script) script.addEventListener('load', initGsi)
+    }
   }, [])
 
   function pickGoogleAccount() {
-    if (!GOOGLE_CLIENT_ID || !(window as any).google) return
+    if (!GOOGLE_CLIENT_ID || !(window as any).google?.accounts) return
     ;(window as any).google.accounts.id.prompt()
   }
 
