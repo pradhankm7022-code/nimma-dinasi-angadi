@@ -88,7 +88,12 @@ export function CatalogPage() {
       {/* Header */}
       <div className="bg-white border-b border-gray-100 sticky top-0 z-10 px-4 pt-4 pb-3 space-y-3">
         <div className="flex items-center justify-between">
-          <h1 className="text-lg font-bold text-gray-900">{storeName}</h1>
+          <div className="flex items-center gap-1.5">
+            <svg className="w-5 h-5 text-green-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13l-1.5 6h13M7 13L5.4 5M10 21a1 1 0 100-2 1 1 0 000 2zm7 0a1 1 0 100-2 1 1 0 000 2z" />
+            </svg>
+            <h1 className="text-lg font-bold text-gray-900">{storeName}</h1>
+          </div>
           <div className="flex gap-1 items-center">
             <KaButton />
             <button
