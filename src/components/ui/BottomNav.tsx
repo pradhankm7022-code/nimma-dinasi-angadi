@@ -26,11 +26,11 @@ export function BottomNav() {
   ]
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 flex z-50">
+    <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 flex z-50" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
       {links.map(({ to, label, icon, badge }) => {
         const active = pathname === to
         return (
-          <Link key={to} to={to} className={`flex-1 flex flex-col items-center py-2 gap-0.5 text-xs font-medium transition-colors ${active ? 'text-green-600' : 'text-gray-500'}`}>
+          <Link key={to} to={to} className={`flex-1 flex flex-col items-center pt-2 pb-2 gap-0.5 text-xs font-medium transition-colors ${active ? 'text-green-600' : 'text-gray-500'}`}>
             <div className="relative">
               {icon}
               {badge != null && badge > 0 && (
