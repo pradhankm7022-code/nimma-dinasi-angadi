@@ -10,7 +10,7 @@ export function BottomNav() {
   const links = [
     { to: sp('/'), label: 'Shop', icon: (
       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l9-9 9 9M5 10v9a1 1 0 001 1h4v-5h4v5h4a1 1 0 001-1v-9" />
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9l1-5h16l1 5M3 9h18M5 11v10h14V11M9 21v-6h6v6" />
       </svg>
     )},
     { to: sp('/cart'), label: 'Cart', icon: (

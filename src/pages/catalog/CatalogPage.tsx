@@ -90,7 +90,7 @@ export function CatalogPage() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-1.5">
             <svg className="w-5 h-5 text-green-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13l-1.5 6h13M7 13L5.4 5M10 21a1 1 0 100-2 1 1 0 000 2zm7 0a1 1 0 100-2 1 1 0 000 2z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9l1-5h16l1 5M3 9h18M5 11v10h14V11M9 21v-6h6v6" />
             </svg>
             <h1 className="text-lg font-bold text-gray-900">{storeName}</h1>
           </div>
