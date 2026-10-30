@@ -1,11 +1,10 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { signIn } from '../../api'
 import { useAuth } from '../../contexts/AuthContext'
 import { useStore } from '../../contexts/StoreContext'
 import { useStorePath } from '../../lib/useStorePath'
-
-const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID as string | undefined
+import { hasGoogleClientId, pickGoogleEmail } from '../../lib/googleAccount'
 
 type Step = 'ask' | 'signin'
 
@@ -20,35 +19,6 @@ export function LoginPage() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [tapCount, setTapCount] = useState(0)
-
-  useEffect(() => {
-    if (!GOOGLE_CLIENT_ID) return
-    function initGsi() {
-      ;(window as any).google.accounts.id.initialize({
-        client_id: GOOGLE_CLIENT_ID,
-        callback: (response: any) => {
-          try {
-            const payload = JSON.parse(atob(response.credential.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')))
-            if (payload.email) setEmail(payload.email)
-          } catch { /* ignore */ }
-        },
-        auto_select: false,
-        cancel_on_tap_outside: true,
-        use_fedcm_for_prompt: false,
-      })
-    }
-    if ((window as any).google?.accounts) {
-      initGsi()
-    } else {
-      const script = document.querySelector('script[src*="accounts.google.com/gsi"]')
-      if (script) script.addEventListener('load', initGsi)
-    }
-  }, [])
-
-  function pickGoogleAccount() {
-    if (!GOOGLE_CLIENT_ID || !(window as any).google?.accounts) return
-    ;(window as any).google.accounts.id.prompt()
-  }
 
   function handleTitleTap() {
     const next = tapCount + 1
@@ -138,8 +108,8 @@ export function LoginPage() {
           {error && (
             <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg px-3 py-2">{error}</div>
           )}
-          {GOOGLE_CLIENT_ID && (
-            <button type="button" onClick={pickGoogleAccount}
+          {hasGoogleClientId && (
+            <button type="button" onClick={() => pickGoogleEmail(setEmail)}
               className="w-full flex items-center justify-center gap-2 border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
               <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">
                 <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
