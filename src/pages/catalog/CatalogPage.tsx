@@ -134,39 +134,45 @@ export function CatalogPage() {
                       <p className="text-sm font-semibold text-gray-900">{user?.name}</p>
                       {editingPhone ? (
                         <div className="mt-2">
-                          <div className="flex items-center gap-1">
+                          <div className="flex items-center gap-1.5">
                             <input
                               type="tel"
                               value={phoneValue}
                               onChange={e => setPhoneValue(e.target.value)}
                               maxLength={10}
-                              className="w-28 border border-gray-200 rounded-md px-2 py-1 text-xs outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500"
+                              className="w-28 border border-gray-200 rounded-md px-2 py-1.5 text-sm outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500"
                               placeholder="0000000000"
                               autoFocus
+                              onBlur={e => {
+                                // close if focus leaves both input and buttons
+                                if (!e.currentTarget.parentElement?.contains(e.relatedTarget as Node)) {
+                                  setEditingPhone(false)
+                                }
+                              }}
                             />
                             <button
                               onClick={savePhone}
                               disabled={phoneSaving}
-                              className="text-xs bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white font-medium px-2.5 py-1 rounded-md shrink-0"
+                              className="text-xs bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white font-medium px-3 py-1.5 rounded-md shrink-0"
                             >
                               {phoneSaving ? '…' : 'Save'}
                             </button>
                             <button
                               onClick={() => setEditingPhone(false)}
-                              className="text-gray-400 hover:text-gray-600 shrink-0 p-0.5"
+                              className="text-gray-400 hover:text-gray-600 shrink-0 p-1"
                             >
-                              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
                               </svg>
                             </button>
                           </div>
                           {phoneError && <p className="text-xs text-red-500 mt-1">{phoneError}</p>}
                         </div>
                       ) : (
-                        <div className="flex items-center gap-1.5 mt-0.5">
+                        <div className="flex items-center gap-2 mt-0.5">
                           <p className="text-xs text-gray-400">{user?.phone || 'No phone'}</p>
-                          <button onClick={startEditPhone} className="text-gray-400 hover:text-gray-600 transition-colors">
-                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <button onClick={startEditPhone} className="text-gray-400 hover:text-gray-600 transition-colors p-0.5">
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536M9 13l6.586-6.586a2 2 0 012.828 2.828L11.828 15.828a2 2 0 01-1.414.586H9v-2a2 2 0 01.586-1.414z" />
                             </svg>
                           </button>
