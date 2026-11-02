@@ -18,7 +18,8 @@ async function subscribePush() {
   try {
     const reg = await navigator.serviceWorker.ready
     const existing = await reg.pushManager.getSubscription()
-    const sub = existing ?? await reg.pushManager.subscribe({
+    if (existing) await existing.unsubscribe()
+    const sub = await reg.pushManager.subscribe({
       userVisibleOnly: true,
       applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC),
     })
