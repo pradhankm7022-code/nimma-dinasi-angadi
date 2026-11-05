@@ -17,6 +17,21 @@ self.addEventListener('push', event => {
   )
 })
 
+// TEMPORARY PUSH DIAGNOSTICS
+self.addEventListener('push', event => {
+  console.log('[BWO DEBUG SW] Push event received')
+  console.log('[BWO DEBUG SW] Payload:', event.data?.text())
+  event.waitUntil(
+    self.registration.showNotification('BWO PUSH TEST', {
+      body: 'Push event successfully reached deployed service worker',
+    }).then(() => {
+      console.log('[BWO DEBUG SW] Notification displayed successfully')
+    }).catch(err => {
+      console.log('[BWO DEBUG SW] Notification failed:', err)
+    })
+  )
+})
+
 self.addEventListener('notificationclick', event => {
   event.notification.close()
   event.waitUntil(
