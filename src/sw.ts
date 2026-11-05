@@ -12,33 +12,19 @@ self.addEventListener('push', event => {
       body: data.body ?? '',
       icon: '/icon-192.png',
       badge: '/icon-192.png',
-      data: { url: '/staff/orders' },
-    })
-  )
-})
-
-// TEMPORARY PUSH DIAGNOSTICS
-self.addEventListener('push', event => {
-  console.log('[BWO DEBUG SW] Push event received')
-  console.log('[BWO DEBUG SW] Payload:', event.data?.text())
-  event.waitUntil(
-    self.registration.showNotification('BWO PUSH TEST', {
-      body: 'Push event successfully reached deployed service worker',
-    }).then(() => {
-      console.log('[BWO DEBUG SW] Notification displayed successfully')
-    }).catch(err => {
-      console.log('[BWO DEBUG SW] Notification failed:', err)
+      data: { url: data.url ?? '/staff/orders' },
     })
   )
 })
 
 self.addEventListener('notificationclick', event => {
   event.notification.close()
+  const url = event.notification.data?.url ?? '/staff/orders'
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then(list => {
       const existing = list.find(c => c.url.includes('/staff/orders'))
       if (existing) return existing.focus()
-      return clients.openWindow('/staff/orders')
+      return clients.openWindow(url)
     })
   )
 })

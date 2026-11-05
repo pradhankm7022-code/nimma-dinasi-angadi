@@ -543,7 +543,14 @@ function notifyStaff(orderNumber) {
   if (!subs.length) return;
   var workerUrl = PropertiesService.getScriptProperties().getProperty('PUSH_WORKER_URL');
   if (!workerUrl) { Logger.log('PUSH_WORKER_URL not set'); return; }
-  var payload = JSON.stringify({ title: 'New Order', body: orderNumber + ' — tap to view' });
+
+  var settingRows = sheetData('Settings');
+  var map = {};
+  settingRows.forEach(function(r) { map[r.key] = r.value; });
+  var slug = map['store_slug'] || '';
+  var url = slug ? '/s/' + slug + '/staff/orders' : '/staff/orders';
+
+  var payload = JSON.stringify({ title: 'New Order', body: orderNumber + ' — tap to view', url: url });
   subs.forEach(function(sub) {
     try {
       UrlFetchApp.fetch(workerUrl, {
