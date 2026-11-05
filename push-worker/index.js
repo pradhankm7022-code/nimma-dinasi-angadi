@@ -83,11 +83,11 @@ async function encrypt(plaintext, p256dhB64, authB64) {
 
   const aesKey = await crypto.subtle.importKey('raw', cek, 'AES-GCM', false, ['encrypt'])
 
-  // Pad: 1 byte delimiter (0x02 = last record) + plaintext
+  // Pad: plaintext + 0x02 delimiter (RFC 8291 — delimiter after plaintext)
   const plaintextBytes = new TextEncoder().encode(plaintext)
   const padded = new Uint8Array(plaintextBytes.length + 1)
-  padded[0] = 2 // padding delimiter — last record
-  padded.set(plaintextBytes, 1)
+  padded.set(plaintextBytes, 0)
+  padded[plaintextBytes.length] = 2
 
   const ciphertext = new Uint8Array(await crypto.subtle.encrypt(
     { name: 'AES-GCM', iv: nonce }, aesKey, padded

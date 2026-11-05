@@ -54,7 +54,7 @@ export function StaffLoginPage() {
       sessionStorage.setItem('nda_is_staff', 'true')
       sessionStorage.removeItem('nda_staff_entry')
       localStorage.setItem('nda_is_staff', 'true')
-      subscribePush() // fire-and-forget — don't block navigation
+      await subscribePush()
       navigate(sp('/staff/orders'), { replace: true })
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Invalid PIN')
