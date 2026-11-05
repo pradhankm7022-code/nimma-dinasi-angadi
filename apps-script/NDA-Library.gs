@@ -5,28 +5,42 @@
 // ============================================================
 
 var _spreadsheetId = null;
+var _spreadsheet = null;   // cached per execution
+var _sheetCache = {};      // cached sheet data per execution
 
 function init(spreadsheetId) {
   _spreadsheetId = spreadsheetId;
+  _spreadsheet = null;
+  _sheetCache = {};
 }
 
 function getSpreadsheet() {
-  return SpreadsheetApp.openById(_spreadsheetId);
+  if (!_spreadsheet) _spreadsheet = SpreadsheetApp.openById(_spreadsheetId);
+  return _spreadsheet;
 }
 
 function sheet(name) {
   return getSpreadsheet().getSheetByName(name);
 }
 
+// Per-execution cache — avoids re-reading same sheet multiple times in one request
 function sheetData(name) {
+  if (_sheetCache[name]) return _sheetCache[name];
   var s = sheet(name);
   var rows = s.getDataRange().getValues();
   var headers = rows[0];
-  return rows.slice(1).map(function(row) {
+  var data = rows.slice(1).map(function(row) {
     var obj = {};
     headers.forEach(function(h, i) { obj[h] = row[i]; });
     return obj;
   });
+  _sheetCache[name] = data;
+  return data;
+}
+
+// Invalidate a specific sheet from the execution cache (call after writes)
+function invalidateCache(name) {
+  delete _sheetCache[name];
 }
 
 function json(data) {
@@ -55,59 +69,106 @@ function hashPassword(pw) {
 }
 
 // ============================================================
-//  Staff token
+//  CacheService helpers
+// ============================================================
+function scriptCache() {
+  return CacheService.getScriptCache();
+}
+
+function cacheGet(key) {
+  try { return scriptCache().get(key); } catch(e) { return null; }
+}
+
+function cachePut(key, value, ttl) {
+  try { scriptCache().put(key, value, ttl); } catch(e) {}
+}
+
+function cacheRemove(key) {
+  try { scriptCache().remove(key); } catch(e) {}
+}
+
+// ============================================================
+//  Staff token — stored in Subscriptions sheet (staff_token column)
 // ============================================================
 function generateStaffToken() {
   var token = uuid() + '-' + uuid();
-  PropertiesService.getScriptProperties().setProperty('STAFF_TOKEN', token);
+  var s = sheet('Subscriptions');
+  var data = s.getDataRange().getValues();
+  var headers = data[0];
+  var tokenCol = headers.indexOf('staff_token');
+  if (tokenCol === -1) return token;
+  for (var i = 1; i < data.length; i++) {
+    s.getRange(i + 1, tokenCol + 1).setValue(token);
+  }
+  PropertiesService.getScriptProperties().setProperty('STAFF_TOKEN_FALLBACK', token);
+  // Cache for fast verification (TTL: 12 hours)
+  cachePut('staff_token', token, 43200);
+  invalidateCache('Subscriptions');
   return token;
 }
 
 function verifyStaffToken(token) {
   if (!token) return false;
-  var stored = PropertiesService.getScriptProperties().getProperty('STAFF_TOKEN');
-  return stored && stored === token;
+  // Check CacheService first — avoids sheet read on every staff request
+  var cached = cacheGet('staff_token');
+  if (cached && cached === token) return true;
+  // Fall back to sheet
+  var s = sheet('Subscriptions');
+  var data = s.getDataRange().getValues();
+  var headers = data[0];
+  var tokenCol = headers.indexOf('staff_token');
+  if (tokenCol !== -1) {
+    for (var i = 1; i < data.length; i++) {
+      if (data[i][tokenCol] === token) {
+        cachePut('staff_token', token, 43200);
+        return true;
+      }
+    }
+  }
+  var fb = PropertiesService.getScriptProperties().getProperty('STAFF_TOKEN_FALLBACK');
+  return fb && fb === token;
 }
 
 // ============================================================
-//  Customer session tokens
+//  Customer session tokens — stored in Users sheet (session_token column)
 // ============================================================
 function generateUserToken(userId) {
   var token = uuid();
-  PropertiesService.getScriptProperties().setProperty('USER_TOKEN_' + userId, token);
+  var s = sheet('Users');
+  var data = s.getDataRange().getValues();
+  var headers = data[0];
+  var tokenCol = headers.indexOf('session_token');
+  if (tokenCol === -1) return token;
+  for (var i = 1; i < data.length; i++) {
+    if (data[i][0] === userId) {
+      s.getRange(i + 1, tokenCol + 1).setValue(token);
+      // Cache for fast verification (TTL: 24 hours)
+      cachePut('user_token_' + userId, token, 86400);
+      invalidateCache('Users');
+      return token;
+    }
+  }
   return token;
 }
 
 function verifyUserToken(userId, token) {
   if (!userId || !token) return false;
-  var stored = PropertiesService.getScriptProperties().getProperty('USER_TOKEN_' + userId);
-  return stored && stored === token;
-}
-
-// ============================================================
-//  Rate limiting
-// ============================================================
-function checkRateLimit(key) {
-  var props = PropertiesService.getScriptProperties();
-  var data = JSON.parse(props.getProperty('RL_' + key) || '{"count":0,"until":0}');
-  var now = Date.now();
-  if (data.until > now) return false;
-  if (data.count >= 5) {
-    props.setProperty('RL_' + key, JSON.stringify({ count: 0, until: now + 5 * 60 * 1000 }));
-    return false;
+  // Check CacheService first — avoids Users sheet read on every customer request
+  var cached = cacheGet('user_token_' + userId);
+  if (cached && cached === token) return true;
+  // Fall back to sheet
+  var s = sheet('Users');
+  var data = s.getDataRange().getValues();
+  var headers = data[0];
+  var tokenCol = headers.indexOf('session_token');
+  if (tokenCol === -1) return false;
+  for (var i = 1; i < data.length; i++) {
+    if (data[i][0] === userId && data[i][tokenCol] === token) {
+      cachePut('user_token_' + userId, token, 86400);
+      return true;
+    }
   }
-  return true;
-}
-
-function recordFailedAttempt(key) {
-  var props = PropertiesService.getScriptProperties();
-  var data = JSON.parse(props.getProperty('RL_' + key) || '{"count":0,"until":0}');
-  data.count = (data.count || 0) + 1;
-  props.setProperty('RL_' + key, JSON.stringify(data));
-}
-
-function clearRateLimit(key) {
-  PropertiesService.getScriptProperties().deleteProperty('RL_' + key);
+  return false;
 }
 
 // ============================================================
@@ -156,6 +217,11 @@ function doGet(e) {
 //  Bootstrap + Settings
 // ============================================================
 function getBootstrap() {
+  // Cache full bootstrap response — invalidated on product/category/settings writes
+  var cacheKey = 'bootstrap_' + _spreadsheetId;
+  var cached = cacheGet(cacheKey);
+  if (cached) return json(JSON.parse(cached));
+
   var settingRows = sheetData('Settings');
   var map = {};
   settingRows.forEach(function(r) { map[r.key] = r.value; });
@@ -185,15 +251,22 @@ function getBootstrap() {
       };
     });
 
-  return ok({
+  var result = {
+    ok: true,
     store_name: map['store_name'] || '',
     store_logo_url: map['store_logo_url'] || '',
     categories: categories,
     products: products,
-  });
+  };
+  cachePut(cacheKey, JSON.stringify(result), 300); // 5 min TTL
+  return json(result);
 }
 
 function getSettings() {
+  var cacheKey = 'settings_' + _spreadsheetId;
+  var cached = cacheGet(cacheKey);
+  if (cached) return json(JSON.parse(cached));
+
   var rows = sheetData('Settings');
   var map = {};
   rows.forEach(function(r) { map[r.key] = r.value; });
@@ -202,18 +275,25 @@ function getSettings() {
     return { id: r.id, name: r.name, name_kn: r.name_kn || r.name, image_url: r.image_url };
   });
 
-  return ok({
+  var result = {
+    ok: true,
     store_name: map['store_name'] || '',
     store_logo_url: map['store_logo_url'] || '',
     store_config: map['store_config'] || '{}',
     categories: categories,
-  });
+  };
+  cachePut(cacheKey, JSON.stringify(result), 300);
+  return json(result);
 }
 
 // ============================================================
 //  Products
 // ============================================================
 function getProducts() {
+  var cacheKey = 'products_' + _spreadsheetId;
+  var cached = cacheGet(cacheKey);
+  if (cached) return json(JSON.parse(cached));
+
   var rows = sheetData('Products');
   var categories = sheetData('Categories');
   var catMap = {};
@@ -237,7 +317,25 @@ function getProducts() {
         order_count: Number(r.order_count) || 0,
       };
     });
-  return ok({ products: products });
+
+  var result = { ok: true, products: products };
+  cachePut(cacheKey, JSON.stringify(result), 300); // 5 min TTL
+  return json(result);
+}
+
+function invalidateProductCache() {
+  cacheRemove('products_' + _spreadsheetId);
+  cacheRemove('bootstrap_' + _spreadsheetId);
+}
+
+function invalidateCategoryCache() {
+  cacheRemove('products_' + _spreadsheetId);
+  cacheRemove('bootstrap_' + _spreadsheetId);
+  cacheRemove('settings_' + _spreadsheetId);
+}
+
+function invalidateOrdersCache() {
+  cacheRemove('orders_' + _spreadsheetId);
 }
 
 function createCategory(body) {
@@ -245,6 +343,7 @@ function createCategory(body) {
   var s = sheet('Categories');
   var id = uuid();
   s.appendRow([id, body.name, body.name_kn || '', body.image_url || '']);
+  invalidateCategoryCache();
   return ok({ id: id });
 }
 
@@ -255,6 +354,7 @@ function updateCategory(body) {
   for (var i = 1; i < data.length; i++) {
     if (data[i][0] === body.id) {
       s.getRange(i + 1, 1, 1, 4).setValues([[body.id, body.name, body.name_kn || '', body.image_url || '']]);
+      invalidateCategoryCache();
       return ok();
     }
   }
@@ -268,6 +368,7 @@ function deleteCategory(body) {
   for (var i = 1; i < data.length; i++) {
     if (data[i][0] === body.id) {
       s.deleteRow(i + 1);
+      invalidateCategoryCache();
       return ok();
     }
   }
@@ -285,6 +386,7 @@ function createProduct(body) {
     body.search_keys || '',
     0,
   ]);
+  invalidateProductCache();
   return ok({ id: id });
 }
 
@@ -302,6 +404,7 @@ function updateProduct(body) {
         body.search_keys || '',
         existingCount,
       ]]);
+      invalidateProductCache();
       return ok();
     }
   }
@@ -315,6 +418,7 @@ function deleteProduct(body) {
   for (var i = 1; i < data.length; i++) {
     if (data[i][0] === body.id) {
       s.deleteRow(i + 1);
+      invalidateProductCache();
       return ok();
     }
   }
@@ -339,18 +443,11 @@ function signUp(body) {
 }
 
 function signIn(body) {
-  var rlKey = 'signin_' + (body.email || '').replace(/[^a-z0-9]/gi, '_');
-  if (!checkRateLimit(rlKey)) return err('Too many attempts. Try again in 5 minutes.');
-
   var users = sheetData('Users');
   var user = users.find(function(u) {
     return u.email === body.email && u.password_hash === hashPassword(body.password);
   });
-  if (!user) {
-    recordFailedAttempt(rlKey);
-    return err('Invalid email or password');
-  }
-  clearRateLimit(rlKey);
+  if (!user) return err('Invalid email or password');
   var token = generateUserToken(user.id);
   return ok({ user: { id: user.id, name: user.name, email: user.email, phone: user.phone }, token: token });
 }
@@ -398,17 +495,10 @@ function verifyOTP(body) {
 //  Staff login
 // ============================================================
 function staffLogin(body) {
-  var rlKey = 'staff_pin';
-  if (!checkRateLimit(rlKey)) return err('Too many attempts. Try again in 5 minutes.');
-
   var rows = sheetData('Settings');
   var map = {};
   rows.forEach(function(r) { map[r.key] = r.value; });
-  if (String(body.pin) !== String(map['staff_pin'])) {
-    recordFailedAttempt(rlKey);
-    return err('Invalid PIN');
-  }
-  clearRateLimit(rlKey);
+  if (String(body.pin) !== String(map['staff_pin'])) return err('Invalid PIN');
   var token = generateStaffToken();
   return ok({ staffToken: token });
 }
@@ -432,18 +522,26 @@ function updatePhone(body) {
 function placeOrder(body) {
   if (!verifyUserToken(body.customerId, body.token)) return err('Unauthorized');
 
-  var s = sheet('Orders');
-  var id = uuid();
-  var existing = s.getLastRow() - 1;
-  var year = new Date().getFullYear();
-  var seq = String(existing + 1).padStart(4, '0');
-  var orderNumber = 'NDA-' + year + '-' + seq;
+  var lock = LockService.getScriptLock();
+  lock.waitLock(10000);
+  var orderNumber;
+  try {
+    var s = sheet('Orders');
+    var existing = s.getLastRow() - 1;
+    var year = new Date().getFullYear();
+    var seq = String(existing + 1).padStart(4, '0');
+    orderNumber = 'NDA-' + year + '-' + seq;
+    var id = uuid();
+    s.appendRow([
+      id, orderNumber, body.customerId,
+      JSON.stringify(body.items), 'Pending', new Date().toISOString(),
+      JSON.stringify(body.photoUrls || []),
+    ]);
+  } finally {
+    lock.releaseLock();
+  }
 
-  s.appendRow([
-    id, orderNumber, body.customerId,
-    JSON.stringify(body.items), 'Pending', new Date().toISOString(),
-    JSON.stringify(body.photoUrls || []),
-  ]);
+  invalidateOrdersCache();
   incrementOrderCounts(body.items);
   try { notifyStaff(orderNumber); } catch(e) { Logger.log('notifyStaff error: ' + e); }
   return ok({ order_number: orderNumber });
@@ -461,6 +559,12 @@ function getMyOrders(customerId, token) {
 
 function getAllOrders(staffToken) {
   if (!verifyStaffToken(staffToken)) return err('Unauthorized');
+
+  // 20-second cache — reduces sheet reads from staff polling every 30s
+  var cacheKey = 'orders_' + _spreadsheetId;
+  var cached = cacheGet(cacheKey);
+  if (cached) return json(JSON.parse(cached));
+
   var rows = sheetData('Orders');
   var users = sheetData('Users');
   var userMap = {};
@@ -472,7 +576,10 @@ function getAllOrders(staffToken) {
     order.customer_phone = user ? user.phone : '';
     return order;
   }).sort(function(a, b) { return new Date(b.created_at) - new Date(a.created_at); });
-  return ok({ orders: orders });
+
+  var result = { ok: true, orders: orders };
+  cachePut(cacheKey, JSON.stringify(result), 21600); // 6hr max — invalidated on order mutations
+  return json(result);
 }
 
 function parseOrder(r) {
@@ -498,6 +605,7 @@ function updateOrderStatus(body) {
   for (var i = 1; i < data.length; i++) {
     if (data[i][0] === body.orderId) {
       s.getRange(i + 1, 5).setValue(body.status);
+      invalidateOrdersCache();
       return ok();
     }
   }
@@ -510,8 +618,8 @@ function finishBagging(body) {
   var data = s.getDataRange().getValues();
   for (var i = 1; i < data.length; i++) {
     if (data[i][0] === body.orderId) {
-      s.getRange(i + 1, 4).setValue(JSON.stringify(body.items));
-      s.getRange(i + 1, 5).setValue('Ready');
+      s.getRange(i + 1, 4, 1, 2).setValues([[JSON.stringify(body.items), 'Ready']]);
+      invalidateOrdersCache();
       return ok();
     }
   }
@@ -524,17 +632,38 @@ function finishBagging(body) {
 function savePushSubscription(body) {
   var sub = body.subscription;
   if (!sub || !sub.endpoint) return err('Invalid subscription');
+
   var s = sheet('Subscriptions');
   var data = s.getDataRange().getValues();
+  var headers = data[0];
+  var tokenCol = headers.indexOf('staff_token');
+
+  // Get current staff token to stamp into rows
+  var currentToken = cacheGet('staff_token') ||
+    PropertiesService.getScriptProperties().getProperty('STAFF_TOKEN_FALLBACK') || '';
+
   for (var i = 1; i < data.length; i++) {
     if (data[i][0] === sub.endpoint) {
-      s.getRange(i + 1, 1, 1, 4).setValues([[
-        sub.endpoint, sub.keys.p256dh, sub.keys.auth, new Date().toISOString()
-      ]]);
+      if (tokenCol !== -1) {
+        s.getRange(i + 1, 1, 1, 5).setValues([[
+          sub.endpoint, sub.keys.p256dh, sub.keys.auth, new Date().toISOString(), currentToken
+        ]]);
+      } else {
+        s.getRange(i + 1, 1, 1, 4).setValues([[
+          sub.endpoint, sub.keys.p256dh, sub.keys.auth, new Date().toISOString()
+        ]]);
+      }
+      invalidateCache('Subscriptions');
       return ok();
     }
   }
-  s.appendRow([sub.endpoint, sub.keys.p256dh, sub.keys.auth, new Date().toISOString()]);
+
+  if (tokenCol !== -1) {
+    s.appendRow([sub.endpoint, sub.keys.p256dh, sub.keys.auth, new Date().toISOString(), currentToken]);
+  } else {
+    s.appendRow([sub.endpoint, sub.keys.p256dh, sub.keys.auth, new Date().toISOString()]);
+  }
+  invalidateCache('Subscriptions');
   return ok();
 }
 
@@ -542,7 +671,7 @@ function notifyStaff(orderNumber) {
   var subs = sheetData('Subscriptions');
   if (!subs.length) return;
   var workerUrl = PropertiesService.getScriptProperties().getProperty('PUSH_WORKER_URL');
-  if (!workerUrl) { Logger.log('PUSH_WORKER_URL not set'); return; }
+  if (!workerUrl) { Logger.log('PUSH_WORKER_URL not set in library Script Properties'); return; }
 
   var settingRows = sheetData('Settings');
   var map = {};
@@ -551,9 +680,11 @@ function notifyStaff(orderNumber) {
   var url = slug ? '/s/' + slug + '/staff/orders' : '/staff/orders';
 
   var payload = JSON.stringify({ title: 'New Order', body: orderNumber + ' — tap to view', url: url });
+
+  var expiredEndpoints = [];
   subs.forEach(function(sub) {
     try {
-      UrlFetchApp.fetch(workerUrl, {
+      var res = UrlFetchApp.fetch(workerUrl, {
         method: 'post',
         contentType: 'application/json',
         payload: JSON.stringify({
@@ -564,10 +695,25 @@ function notifyStaff(orderNumber) {
         }),
         muteHttpExceptions: true,
       });
+      var resBody = res.getContentText();
+      if (resBody.indexOf('410') !== -1) {
+        expiredEndpoints.push(sub.endpoint);
+      }
     } catch(e) {
       Logger.log('Push send error: ' + e.message);
     }
   });
+
+  if (expiredEndpoints.length) {
+    var s = sheet('Subscriptions');
+    var data = s.getDataRange().getValues();
+    for (var i = data.length - 1; i >= 1; i--) {
+      if (expiredEndpoints.indexOf(data[i][0]) !== -1) {
+        s.deleteRow(i + 1);
+      }
+    }
+    invalidateCache('Subscriptions');
+  }
 }
 
 function incrementOrderCounts(items) {
@@ -578,16 +724,27 @@ function incrementOrderCounts(items) {
   var idCol = headers.indexOf('id');
   var countCol = headers.indexOf('order_count');
   if (idCol === -1 || countCol === -1) return;
+
+  var qtyMap = {};
   items.forEach(function(item) {
-    for (var i = 1; i < data.length; i++) {
-      if (data[i][idCol] === item.product_id) {
-        var current = Number(data[i][countCol]) || 0;
-        s.getRange(i + 1, countCol + 1).setValue(current + 1);
-        data[i][countCol] = current + 1;
-        break;
-      }
-    }
+    qtyMap[item.product_id] = (qtyMap[item.product_id] || 0) + (item.qty || 1);
   });
+
+  var updates = [];
+  for (var i = 1; i < data.length; i++) {
+    var pid = data[i][idCol];
+    if (qtyMap[pid]) {
+      data[i][countCol] = (Number(data[i][countCol]) || 0) + qtyMap[pid];
+      updates.push({ row: i + 1, col: countCol + 1, val: data[i][countCol] });
+    }
+  }
+
+  updates.forEach(function(u) {
+    s.getRange(u.row, u.col).setValue(u.val);
+  });
+
+  // Invalidate product cache since order_counts changed
+  invalidateProductCache();
 }
 
 // ============================================================
@@ -599,7 +756,6 @@ function keepWarm() {
 
 // ============================================================
 //  Stores — slug → Web App URL, stored in developer sheet
-//  Uses REGISTRY_SHEET_ID Script Property (set once in Library's own GAS project)
 // ============================================================
 function getRegistrySheet() {
   var id = PropertiesService.getScriptProperties().getProperty('SPREADSHEET_ID');
