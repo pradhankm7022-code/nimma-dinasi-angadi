@@ -31,7 +31,7 @@ export function StaffOrdersPage() {
     const videoUrl = 'https://youtube.com/shorts/hBYX2bqltbY?si=iRiML9eAQQg_D72-'
     const text = `Shop groceries online at ${storeName} 🛒\n${url}\n\nHow to use the app 👇\n${videoUrl}`
     if (navigator.share) {
-      navigator.share({ title: storeName, text, url }).catch(() => {})
+      navigator.share({ title: storeName, text }).catch(() => {})
     } else {
       navigator.clipboard.writeText(text).then(() => alert('Link copied!'))
     }
