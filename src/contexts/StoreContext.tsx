@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useState } from 'react'
+import { useLocation } from 'react-router-dom'
 import { getProducts, getSettings } from '../api'
 import type { CartItem, Category, Product, StoreConfig } from '../types'
 
@@ -63,6 +64,8 @@ function parseConfig(raw?: string): StoreConfig {
 
 export function StoreProvider({ children }: { children: React.ReactNode }) {
   const cached = readCache()
+  const { pathname } = useLocation()
+  const isStaff = pathname.includes('/staff/')
 
   const [storeName, setStoreName] = useState(cached?.storeName ?? 'Nimma Dinasi Angadi')
   const [storeLogo, setStoreLogo] = useState(cached?.storeLogo ?? '')
@@ -81,26 +84,37 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   useEffect(() => {
-    // Always fetch fresh in background — stale-while-revalidate
-    // Products are NOT re-sorted after fetch to avoid visible list reorder
-    Promise.all([getSettings(), getProducts()])
-      .then(([settings, productsRes]) => {
-        const config = parseConfig(settings.store_config)
-        setStoreName(settings.store_name)
-        setStoreLogo(settings.store_logo_url)
-        setStoreConfig(config)
-        setCategories(settings.categories)
-        if (!cached) setProducts(sortByOrderCount(productsRes.products))
-        writeCache({
-          storeName: settings.store_name,
-          storeLogo: settings.store_logo_url,
-          storeConfig: config,
-          categories: settings.categories,
-          products: productsRes.products,
+    if (isStaff) {
+      getSettings()
+        .then(settings => {
+          const config = parseConfig(settings.store_config)
+          setStoreName(settings.store_name)
+          setStoreLogo(settings.store_logo_url)
+          setStoreConfig(config)
+          setCategories(settings.categories)
         })
-      })
-      .catch(console.error)
-      .finally(() => setLoadingStore(false))
+        .catch(console.error)
+        .finally(() => setLoadingStore(false))
+    } else {
+      Promise.all([getSettings(), getProducts()])
+        .then(([settings, productsRes]) => {
+          const config = parseConfig(settings.store_config)
+          setStoreName(settings.store_name)
+          setStoreLogo(settings.store_logo_url)
+          setStoreConfig(config)
+          setCategories(settings.categories)
+          if (!cached) setProducts(sortByOrderCount(productsRes.products))
+          writeCache({
+            storeName: settings.store_name,
+            storeLogo: settings.store_logo_url,
+            storeConfig: config,
+            categories: settings.categories,
+            products: productsRes.products,
+          })
+        })
+        .catch(console.error)
+        .finally(() => setLoadingStore(false))
+    }
   }, [])
 
   function addToCart(item: CartItem) {

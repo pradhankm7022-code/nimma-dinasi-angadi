@@ -96,7 +96,11 @@ export function SignUpPage() {
 
         <p className="text-center mt-4 text-sm text-gray-500">
           Already have an account?{' '}
-          <Link to={sp('/login')} className="text-green-600 hover:underline font-medium">Sign in</Link>
+          <Link
+            to={sp('/login')}
+            state={{ step: 'signin' }}
+            className="text-green-600 hover:underline font-medium"
+          >Sign in</Link>
         </p>
       </div>
     </div>

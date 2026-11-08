@@ -139,7 +139,7 @@ export default {
           'Authorization': `vapid t=${token},k=${env.VAPID_PUBLIC}`,
           'Content-Type': 'application/octet-stream',
           'Content-Encoding': 'aes128gcm',
-          'TTL': '60',
+          'TTL': '21600',
         },
         body: encrypted,
       })

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { signIn } from '../../api'
 import { useAuth } from '../../contexts/AuthContext'
 import { useStore } from '../../contexts/StoreContext'
@@ -12,8 +12,22 @@ export function LoginPage() {
   const { login } = useAuth()
   const { storeName, storeLogo } = useStore()
   const navigate = useNavigate()
+  const location = useLocation()
   const sp = useStorePath()
-  const [step, setStep] = useState<Step>('ask')
+  const [step, setStep] = useState<Step>(() => {
+    if ((location.state as { step?: string })?.step === 'signin') return 'signin'
+    return sessionStorage.getItem('nda_login_step') === 'signin' ? 'signin' : 'ask'
+  })
+
+  function goToSignin() {
+    sessionStorage.setItem('nda_login_step', 'signin')
+    setStep('signin')
+  }
+
+  function goToAsk() {
+    sessionStorage.removeItem('nda_login_step')
+    setStep('ask')
+  }
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
@@ -37,6 +51,7 @@ export function LoginPage() {
     try {
       const res = await signIn(email, password)
       login(res.user, res.token)
+      sessionStorage.removeItem('nda_login_step')
       navigate(sp('/'), { replace: true })
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Login failed')
@@ -75,13 +90,13 @@ export function LoginPage() {
 
           <div className="space-y-3">
             <button
-              onClick={() => navigate(sp('/signup'))}
+            onClick={() => navigate(sp('/signup'))}
               className="w-full bg-green-600 hover:bg-green-700 active:bg-green-800 text-white font-semibold py-3.5 rounded-xl text-sm transition-colors shadow-sm"
             >
               Yes, create an account
             </button>
             <button
-              onClick={() => setStep('signin')}
+              onClick={() => goToSignin()}
               className="w-full bg-gray-50 border border-gray-200 hover:bg-gray-100 text-gray-800 font-semibold py-3.5 rounded-xl text-sm transition-colors"
             >
               No, I already have an account
@@ -95,7 +110,7 @@ export function LoginPage() {
   return (
     <div className="min-h-svh flex flex-col items-center justify-center bg-gray-50 px-4">
       <div className="w-full max-w-sm">
-        <button onClick={() => setStep('ask')} className="flex items-center gap-1 text-sm text-gray-500 mb-4 hover:text-gray-700">
+        <button onClick={() => goToAsk()} className="flex items-center gap-1 text-sm text-gray-500 mb-4 hover:text-gray-700">
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
           </svg>

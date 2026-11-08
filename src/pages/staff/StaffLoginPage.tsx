@@ -66,6 +66,15 @@ export function StaffLoginPage() {
   return (
     <div className="min-h-svh flex flex-col items-center justify-center bg-gray-50 px-4">
       <div className="w-full max-w-xs">
+        <button
+          onClick={() => navigate(sp('/'))}
+          className="flex items-center gap-1 text-sm text-gray-400 hover:text-gray-600 mb-6 transition-colors"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          </svg>
+          Back
+        </button>
         <h1 className="text-2xl font-bold text-center text-gray-900 mb-1">Staff Login</h1>
         <p className="text-sm text-center text-gray-500 mb-6">Enter your PIN to continue</p>
 

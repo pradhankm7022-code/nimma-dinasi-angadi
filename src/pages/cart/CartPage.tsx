@@ -19,7 +19,7 @@ function writePhotos(urls: string[]) {
 
 export function CartPage() {
   const { cart, updateCartQty, clearCart, storeConfig } = useStore()
-  const { user, sessionToken } = useAuth()
+  const { user, sessionToken, logout } = useAuth()
   const { lang } = useLang()
   const navigate = useNavigate()
   const sp = useStorePath()
@@ -74,7 +74,13 @@ export function CartPage() {
       writePhotos([])
       navigate(sp('/orders'), { state: { newOrder: res.order_number } })
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Failed to place order')
+      const msg = err instanceof Error ? err.message : 'Failed to place order'
+      if (msg === 'Unauthorized') {
+        logout()
+        navigate(sp('/login'), { replace: true })
+        return
+      }
+      setError(msg)
     } finally {
       setLoading(false)
     }

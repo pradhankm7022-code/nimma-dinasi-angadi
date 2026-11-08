@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
   createCategory, createProduct, deleteCategory, deleteProduct,
@@ -35,6 +35,7 @@ export function StaffProductsPage() {
   const { lang } = useLang()
   const sp = useStorePath()
   const [tab, setTab] = useState<Tab>('products')
+  const scrollPosRef = useRef(0)
 
   // Products state
   const cached = readProductsCache()
@@ -65,12 +66,14 @@ export function StaffProductsPage() {
 
   // ── Product actions ──────────────────────────────────────
   function openNewProduct() {
+    scrollPosRef.current = window.scrollY
     setEditingProduct({ id: '', ...EMPTY_PRODUCT })
     setIsNewProduct(true)
     setProductError('')
   }
 
   function openEditProduct(p: Product) {
+    scrollPosRef.current = window.scrollY
     setEditingProduct({ ...p, variants: p.variants.map(v => ({ ...v })) })
     setIsNewProduct(false)
     setProductError('')
@@ -97,6 +100,7 @@ export function StaffProductsPage() {
         })
       }
       setEditingProduct(null)
+      requestAnimationFrame(() => window.scrollTo(0, scrollPosRef.current))
     } catch (err: unknown) {
       setProductError(err instanceof Error ? err.message : 'Save failed')
     } finally {
@@ -162,10 +166,10 @@ export function StaffProductsPage() {
     setCatError('')
     try {
       if (isNewCat) {
-        const res = await createCategory(editingCat.name, editingCat.image_url, getStaffToken())
+        const res = await createCategory(editingCat.name, editingCat.name_kn || '', editingCat.image_url, getStaffToken())
         setCategories([...categories, { ...editingCat, id: res.id, name_kn: editingCat.name_kn || editingCat.name }])
       } else {
-        await updateCategory(editingCatId, editingCat.name, editingCat.image_url, getStaffToken())
+        await updateCategory(editingCatId, editingCat.name, editingCat.name_kn || '', editingCat.image_url, getStaffToken())
         setCategories(categories.map(c => c.id === editingCatId ? { ...editingCat, id: editingCatId } : c))
       }
       setEditingCat(null)
@@ -306,10 +310,18 @@ export function StaffProductsPage() {
         <div className="px-4 pt-4 space-y-4 max-w-lg">
           {catError && <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg px-3 py-2">{catError}</div>}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Name (English)</label>
             <input
               type="text" value={editingCat.name} onChange={e => setEditingCat({ ...editingCat, name: e.target.value })}
               placeholder="Fruits"
+              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Name (Kannada)</label>
+            <input
+              type="text" value={editingCat.name_kn || ''} onChange={e => setEditingCat({ ...editingCat, name_kn: e.target.value })}
+              placeholder="ಹಣ್ಣುಗಳು"
               className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500"
             />
           </div>

@@ -89,11 +89,11 @@ export const staffLogin = (pin: string) =>
   call<{ ok: true; staffToken: string }>({ action: 'staffLogin', pin })
 
 // Category CRUD (staff)
-export const createCategory = (name: string, image_url: string, staffToken: string) =>
-  call<{ ok: true; id: string }>({ action: 'createCategory', name, image_url, staffToken })
+export const createCategory = (name: string, name_kn: string, image_url: string, staffToken: string) =>
+  call<{ ok: true; id: string }>({ action: 'createCategory', name, name_kn, image_url, staffToken })
 
-export const updateCategory = (id: string, name: string, image_url: string, staffToken: string) =>
-  call<{ ok: true }>({ action: 'updateCategory', id, name, image_url, staffToken })
+export const updateCategory = (id: string, name: string, name_kn: string, image_url: string, staffToken: string) =>
+  call<{ ok: true }>({ action: 'updateCategory', id, name, name_kn, image_url, staffToken })
 
 export const deleteCategory = (id: string, staffToken: string) =>
   call<{ ok: true }>({ action: 'deleteCategory', id, staffToken })

@@ -24,7 +24,16 @@ export function StaffOrdersPage() {
   const { lang } = useLang()
   const navigate = useNavigate()
   const sp = useStorePath()
-  const { storeConfig } = useStore()
+  const { storeConfig, storeName } = useStore()
+
+  function handleShare() {
+    const url = window.location.origin + sp('/')
+    if (navigator.share) {
+      navigator.share({ title: storeName, url }).catch(() => {})
+    } else {
+      navigator.clipboard.writeText(url).then(() => alert('Link copied!'))
+    }
+  }
 
   useEffect(() => {
     window.history.replaceState(null, '', sp('/staff/orders'))
@@ -97,6 +106,11 @@ export function StaffOrdersPage() {
         <h1 className="text-lg font-bold text-gray-900">Orders</h1>
         <div className="flex items-center gap-3">
           <KaButton />
+          <button onClick={handleShare} className="p-2 text-gray-400 hover:text-green-600 hover:bg-gray-100 rounded-lg transition-colors" title="Share app">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+            </svg>
+          </button>
           <Link to={sp('/staff/products')} className="text-sm text-green-600 font-medium hover:underline">Products</Link>
           <button onClick={handleLogout} className="p-2 text-gray-400 hover:text-red-500 hover:bg-gray-100 rounded-lg transition-colors" title="Logout">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
