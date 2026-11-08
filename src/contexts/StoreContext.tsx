@@ -66,6 +66,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const cached = readCache()
   const { pathname } = useLocation()
   const isStaff = pathname.includes('/staff/')
+  const needsProducts = !isStaff && !pathname.endsWith('/orders') && !pathname.endsWith('/cart')
 
   const [storeName, setStoreName] = useState(cached?.storeName ?? 'Nimma Dinasi Angadi')
   const [storeLogo, setStoreLogo] = useState(cached?.storeLogo ?? '')
@@ -84,7 +85,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   useEffect(() => {
-    if (isStaff) {
+    if (!needsProducts) {
       getSettings()
         .then(settings => {
           const config = parseConfig(settings.store_config)
