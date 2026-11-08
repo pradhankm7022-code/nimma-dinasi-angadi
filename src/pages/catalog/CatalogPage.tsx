@@ -59,12 +59,13 @@ export function CatalogPage() {
   }
 
   function handleShare() {
-    const url = window.location.origin
-    const text = `Shop groceries online at ${storeName}: ${url}`
+    const url = window.location.origin + sp('/')
+    const videoUrl = 'https://youtube.com/shorts/hBYX2bqltbY?si=iRiML9eAQQg_D72-'
+    const text = `Shop groceries online at ${storeName} 🛒\n${url}\n\nHow to use the app 👇\n${videoUrl}`
     if (navigator.share) {
       navigator.share({ title: storeName, text, url }).catch(() => {})
     } else {
-      navigator.clipboard.writeText(url).then(() => alert('Link copied!'))
+      navigator.clipboard.writeText(text).then(() => alert('Link copied!'))
     }
     setMenuOpen(false)
   }
