@@ -543,7 +543,14 @@ function placeOrder(body) {
 
   invalidateOrdersCache();
   incrementOrderCounts(body.items);
-  try { notifyStaff(orderNumber); } catch(e) { Logger.log('notifyStaff error: ' + e); }
+  // Schedule notifyStaff to run immediately in a separate execution so it doesn't block the response
+  try {
+    PropertiesService.getScriptProperties().setProperty('PENDING_NOTIFY_ORDER', orderNumber);
+    ScriptApp.newTrigger('runPendingNotify').timeBased().after(1).create();
+  } catch(e) {
+    // Fallback: notify synchronously if trigger creation fails
+    try { notifyStaff(orderNumber); } catch(e2) { Logger.log('notifyStaff error: ' + e2); }
+  }
   return ok({ order_number: orderNumber });
 }
 
@@ -716,6 +723,20 @@ function notifyStaff(orderNumber) {
   }
 }
 
+function runPendingNotify() {
+  var props = PropertiesService.getScriptProperties();
+  var orderNumber = props.getProperty('PENDING_NOTIFY_ORDER');
+  if (orderNumber) {
+    props.deleteProperty('PENDING_NOTIFY_ORDER');
+    try { notifyStaff(orderNumber); } catch(e) { Logger.log('runPendingNotify error: ' + e); }
+  }
+  // Clean up this trigger
+  var triggers = ScriptApp.getProjectTriggers();
+  triggers.forEach(function(t) {
+    if (t.getHandlerFunction() === 'runPendingNotify') ScriptApp.deleteTrigger(t);
+  });
+}
+
 function incrementOrderCounts(items) {
   if (!items || !items.length) return;
   var s = sheet('Products');
@@ -739,11 +760,11 @@ function incrementOrderCounts(items) {
     }
   }
 
-  updates.forEach(function(u) {
-    s.getRange(u.row, u.col).setValue(u.val);
-  });
-
-  // Invalidate product cache since order_counts changed
+  // Write all updated counts in a single setValues call covering the full column
+  if (updates.length) {
+    var countValues = data.slice(1).map(function(row) { return [row[countCol]]; });
+    s.getRange(2, countCol + 1, countValues.length, 1).setValues(countValues);
+  }
   invalidateProductCache();
 }
 
