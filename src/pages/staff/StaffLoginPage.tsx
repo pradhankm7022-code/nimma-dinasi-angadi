@@ -54,6 +54,9 @@ export function StaffLoginPage() {
       sessionStorage.setItem('nda_is_staff', 'true')
       sessionStorage.removeItem('nda_staff_entry')
       localStorage.setItem('nda_is_staff', 'true')
+      localStorage.setItem('nda_staff_token', res.staffToken)
+      localStorage.setItem('nda_staff_token_expiry', String(Date.now() + 6 * 60 * 60 * 1000))
+      localStorage.setItem('nda_staff_token', res.staffToken)
       await subscribePush()
       navigate(sp('/staff/orders'), { replace: true })
     } catch (err: unknown) {

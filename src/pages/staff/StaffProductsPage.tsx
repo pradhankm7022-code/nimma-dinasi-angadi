@@ -23,7 +23,7 @@ function writeProductsCache(products: Product[]) {
 }
 
 function getStaffToken(): string {
-  return sessionStorage.getItem('nda_staff_token') ?? ''
+  return sessionStorage.getItem('nda_staff_token') ?? localStorage.getItem('nda_staff_token') ?? ''
 }
 
 const EMPTY_PRODUCT: Omit<Product, 'id'> = {

@@ -12,7 +12,12 @@ export function RequireAuth() {
 }
 
 export function RequireStaff() {
-  const staffAuthed = sessionStorage.getItem('nda_staff') === 'true'
+  const staffAuthed = (() => {
+    if (sessionStorage.getItem('nda_staff') === 'true') return true
+    const token = localStorage.getItem('nda_staff_token')
+    const expiry = Number(localStorage.getItem('nda_staff_token_expiry') || 0)
+    return !!token && Date.now() < expiry
+  })()
   const sp = useStorePath()
   return staffAuthed ? <Outlet /> : <Navigate to={sp('/staff/login')} replace />
 }
