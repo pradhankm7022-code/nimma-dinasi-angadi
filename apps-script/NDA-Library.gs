@@ -739,11 +739,22 @@ function runPendingNotify() {
 
 function incrementOrderCounts(items) {
   if (!items || !items.length) return;
+
+  // Build set of exempt category IDs (those with no_order_count = TRUE)
+  var cats = sheetData('Categories');
+  var exemptCats = {};
+  cats.forEach(function(c) {
+    if (c.no_order_count === true || c.no_order_count === 'TRUE') {
+      exemptCats[c.id] = true;
+    }
+  });
+
   var s = sheet('Products');
   var data = s.getDataRange().getValues();
   var headers = data[0];
   var idCol = headers.indexOf('id');
   var countCol = headers.indexOf('order_count');
+  var catCol = headers.indexOf('category_id');
   if (idCol === -1 || countCol === -1) return;
 
   var qtyMap = {};
@@ -754,10 +765,11 @@ function incrementOrderCounts(items) {
   var updates = [];
   for (var i = 1; i < data.length; i++) {
     var pid = data[i][idCol];
-    if (qtyMap[pid]) {
-      data[i][countCol] = (Number(data[i][countCol]) || 0) + qtyMap[pid];
-      updates.push({ row: i + 1, col: countCol + 1, val: data[i][countCol] });
-    }
+    if (!qtyMap[pid]) continue;
+    var catId = catCol !== -1 ? data[i][catCol] : '';
+    if (exemptCats[catId]) continue;
+    data[i][countCol] = (Number(data[i][countCol]) || 0) + qtyMap[pid];
+    updates.push(i);
   }
 
   // Write all updated counts in a single setValues call covering the full column
